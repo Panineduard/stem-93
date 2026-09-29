@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "arduino-code-generator": {
+      "source": "wedsamuel1230/arduino-skills",
+      "sourceType": "github",
+      "skillPath": "skills/arduino-code-generator/SKILL.md",
+      "computedHash": "b1eaec0d2da9dd8d16fde28fb35fa85965306b99d91158b92c6c03b297405698"
+    },
+    "arduino-project-builder": {
+      "source": "wedsamuel1230/arduino-skills",
+      "sourceType": "github",
+      "skillPath": "skills/arduino-project-builder/SKILL.md",
+      "computedHash": "d26cd86778221467bccd16ac7d4cca6c60c079175485cb4e8739ef7ecae632cb"
+    },
+    "git-commit": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/git-commit/SKILL.md",
+      "computedHash": "2607fc60629b82b257136dd2a7a373f0a4466c0b49df7746d845d59313c99b21"
+    }
+  }
+}
