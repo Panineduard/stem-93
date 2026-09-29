@@ -188,16 +188,3 @@ flowchart LR
 Хочеш у команду? Пиши **[контакт]** або підходь до **[ім’я куратора]**.
 
 ###### STEAM-93 · учнівський STEM-проєкт
-
-<!-- Рендер ```mermaid-блоків: Marp сам їх не малює, тому підключаємо mermaid.js (потрібен html: true). -->
-<script type="module">
-import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
-document.querySelectorAll('pre > code.language-mermaid').forEach((code) => {
-  const div = document.createElement('div');
-  div.className = 'mermaid';
-  div.textContent = code.textContent;
-  code.parentElement.replaceWith(div);
-});
-mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
-await mermaid.run({ querySelector: '.mermaid' });
-</script>
