@@ -3,6 +3,7 @@ marp: true
 lang: uk
 title: "STEAM-93: Шкільний аудіоплеєр"
 paginate: true
+html: true
 style: |
   section { background: #F5F2EA; color: #131B2E; font-family: Manrope, Arial, sans-serif; }
   h1, h2 { font-family: Unbounded, Arial, sans-serif; }
@@ -10,6 +11,7 @@ style: |
   section.dark { background: #131B2E; color: #F5F2EA; }
   section.dark h6, section.dark strong { color: #F4C542; }
   pre { font-size: 0.6em; }
+  .mermaid { display: flex; justify-content: center; background: transparent; }
 ---
 
 <!-- _class: dark -->
@@ -64,17 +66,28 @@ style: |
 
 ## Схема системи
 
-```text
- ┌───────────┐          ┌──────────────────┐          ┌─────────────┐  аудіо   ┌────────────────┐
- ┊  Телефон  ┊          │  Екран + кнопки  │          │ MP3-модуль  │ ───────▶ │  Підсилювач    │
- └─────┬─────┘          │ меню, ручний     │          │ треки на SD │          │ і шкільний     │
-       ┊ Wi-Fi          └────────┬─────────┘          └──────▲──────┘          │ пульт          │
- ┌─────┴─────┐                   │                 команди   │                 └───▲────────┬───┘
- ┊   ESP32   ┊ ◀┄┄┄┄┄┄┄┄▶ ┌──────┴──────────┐ ─────────────────┘                     │ 220 В  │
- ┊ Wi-Fi,час ┊            │     ARDUINO     │          ┌─────────────┐             │        ▼
- └───────────┘            │ розклад, логіка │ ───────▶ │    Реле     │ ────────────┘  ┌──────────┐
-                          └─────────────────┘          │ живлення    │                │ Динаміки │
-                                                       └─────────────┘                └──────────┘
+```mermaid
+flowchart LR
+    PHONE["Телефон"]
+    ESP["ESP32<br/>Wi-Fi, час"]
+    UI["Екран + кнопки<br/>меню, ручний запуск"]
+    ARD["ARDUINO<br/>розклад, логіка"]
+    MP3["MP3-модуль<br/>треки на SD"]
+    RELAY["Реле<br/>живлення"]
+    AMP["Підсилювач<br/>і шкільний пульт"]
+    SPK["Динаміки"]
+
+    PHONE -.->|"Wi-Fi"| ESP
+    ESP <-.-> ARD
+    UI --- ARD
+    ARD -->|"команди"| MP3
+    MP3 -->|"аудіо"| AMP
+    ARD --> RELAY
+    RELAY -->|"220 В"| AMP
+    AMP --> SPK
+
+    classDef optional stroke-dasharray: 5 5
+    class PHONE,ESP optional
 ```
 
 Пунктир — опційні частини. Точний час: RTC-модуль або інтернет-час через ESP32 — остаточно вирішимо на етапі вибору компонентів.
@@ -175,3 +188,16 @@ style: |
 Хочеш у команду? Пиши **[контакт]** або підходь до **[ім’я куратора]**.
 
 ###### STEAM-93 · учнівський STEM-проєкт
+
+<!-- Рендер ```mermaid-блоків: Marp сам їх не малює, тому підключаємо mermaid.js (потрібен html: true). -->
+<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+document.querySelectorAll('pre > code.language-mermaid').forEach((code) => {
+  const div = document.createElement('div');
+  div.className = 'mermaid';
+  div.textContent = code.textContent;
+  code.parentElement.replaceWith(div);
+});
+mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
+await mermaid.run({ querySelector: '.mermaid' });
+</script>
