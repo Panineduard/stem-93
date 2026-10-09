@@ -58,6 +58,8 @@ flowchart LR
 
 # 4. Урок 1 — Make it speak 🔊
 
+> Детальний сценарій на 90 хвилин, теорія, оцінювання й діагностика: [план уроку](../lessons/lesson-01-make-it-speak/lesson-plan.md). Слайди заняття: [презентація уроку](../lessons/lesson-01-make-it-speak/presentation.md). Технічна схема, скетч і стан перевірки: [папка уроку](../lessons/lesson-01-make-it-speak/).
+
 ## Mission
 
 > **Підключити Arduino до MP3-модуля та динаміка і відтворити перший звук.**
@@ -232,6 +234,8 @@ mindmap
 ---
 
 # 6. Урок 2 — Make it know the time ⏰
+
+> Детальний сценарій, теорія та дві гілки практикуму (RTC обраний / ще не обраний): [план уроку](../lessons/lesson-02-know-the-time/lesson-plan.md). Слайди: [презентація уроку](../lessons/lesson-02-know-the-time/presentation.md). Модель RTC та інтерфейс ще не визначені.
 
 ## Mission
 

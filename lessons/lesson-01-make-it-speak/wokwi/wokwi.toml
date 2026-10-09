@@ -1,0 +1,11 @@
+# Конфігурація для Wokwi CLI / MCP та розширення VS Code.
+# Прошивку спочатку треба зібрати (див. ../README.md, розділ «Симуляція»).
+[wokwi]
+version = 1
+firmware = '../sketch/build/arduino.avr.uno/sketch.ino.hex'
+elf = '../sketch/build/arduino.avr.uno/sketch.ino.elf'
+
+# Custom chip: dfplayer-mini.chip.c треба скомпілювати у WebAssembly.
+[[chip]]
+name = 'dfplayer-mini'
+binary = 'dfplayer-mini.chip.wasm'

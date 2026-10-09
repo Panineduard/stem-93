@@ -18,6 +18,18 @@
       "sourceType": "github",
       "skillPath": "skills/git-commit/SKILL.md",
       "computedHash": "2607fc60629b82b257136dd2a7a373f0a4466c0b49df7746d845d59313c99b21"
+    },
+    "pptx-design-styles": {
+      "source": "corazzon/pptx-design-styles",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "5fcf645f71eab1a8acac6ec5721a7724009359de90573aa2aa46f87845caa95b"
+    },
+    "wokwi-mcp-testing": {
+      "source": "hoangsoft90/ai_skills",
+      "sourceType": "github",
+      "skillPath": "skills/wokwi-mcp-testing/SKILL.md",
+      "computedHash": "17b52af03f9c32981b691b5b0a1198a5b4e784da1e85a7aed2b22d660caac8bc"
     }
   }
 }

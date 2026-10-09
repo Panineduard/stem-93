@@ -1,1 +1,7 @@
 .idea
+# Збірка Arduino та Wokwi
+build/
+*.chip.wasm
+wokwi-api.h
+# Може містити токен Wokwi
+.mcp.json

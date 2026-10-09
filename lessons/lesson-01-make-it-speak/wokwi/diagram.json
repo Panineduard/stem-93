@@ -1,0 +1,166 @@
+{
+  "version": 1,
+  "author": "STEM-93",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "wokwi-arduino-uno",
+      "id": "uno",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "chip-dfplayer-mini",
+      "id": "mp3",
+      "top": -30,
+      "left": 480,
+      "attrs": {
+        "sdCard": "1",
+        "trackCount": "3",
+        "trackSeconds": "5"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": -65.65,
+      "left": 300,
+      "attrs": {
+        "value": "1000"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "txt_r1",
+      "top": -100,
+      "left": 285,
+      "attrs": {
+        "text": "R1 = 1 кОм"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "txt_rx",
+      "top": -33.4,
+      "left": 600,
+      "attrs": {
+        "text": "RX ← R1 ← D11"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "txt_tx",
+      "top": -4.6,
+      "left": 600,
+      "attrs": {
+        "text": "TX → D10"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "txt_busy",
+      "top": 24.2,
+      "left": 600,
+      "attrs": {
+        "text": "BUSY → D7"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "txt_spk_1",
+      "top": 53,
+      "left": 600,
+      "attrs": {
+        "text": "SPK_1 → динамік"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "txt_spk_2",
+      "top": 81.8,
+      "left": 600,
+      "attrs": {
+        "text": "SPK_2 → динамік"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "txt_gnd",
+      "top": 110.6,
+      "left": 600,
+      "attrs": {
+        "text": "GND → GND"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "txt_vcc",
+      "top": 139.4,
+      "left": 600,
+      "attrs": {
+        "text": "VCC ← 5V"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "uno:11",
+      "r1:1",
+      "orange",
+      [
+        "v-69"
+      ]
+    ],
+    [
+      "r1:2",
+      "mp3:RX",
+      "orange",
+      [
+        "h80",
+        "v38.6"
+      ]
+    ],
+    [
+      "uno:10",
+      "mp3:TX",
+      "green",
+      [
+        "v-54",
+        "h275",
+        "v52.4"
+      ]
+    ],
+    [
+      "uno:7",
+      "mp3:BUSY",
+      "violet",
+      [
+        "v-39",
+        "h229",
+        "v66.2"
+      ]
+    ],
+    [
+      "uno:GND.2",
+      "mp3:GND",
+      "black",
+      [
+        "v68.5",
+        "h280.5",
+        "v-137.4"
+      ]
+    ],
+    [
+      "uno:5V",
+      "mp3:VCC",
+      "red",
+      [
+        "v83.5",
+        "h300",
+        "v-123.6"
+      ]
+    ]
+  ],
+  "dependencies": {}
+}
