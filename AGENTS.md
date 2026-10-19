@@ -17,4 +17,4 @@
 
 ## Поточний стан
 
-Підтверджене обладнання: **Arduino Uno** (основна плата) і **DFPlayer Mini** (бібліотека DFRobotDFPlayerMini, SoftwareSerial D10/D11, BUSY → D7). Уроки курсу лежать у `lessons/` (кожен урок — окрема папка; план курсу — `dev/lessons.md`). `controller/controller.ino` — поки заготівка. RTC, дисплей і реле ще не обрані — для них не додавай непідтверджених пінів і бібліотек.
+Підтверджене обладнання: **Arduino Uno** (основна плата) і **DFPlayer Mini** (бібліотека DFRobotDFPlayerMini, SoftwareSerial D10/D11, BUSY → D7). Уроки курсу лежать у `lessons/` (кожен урок — окрема папка; план курсу — `dev/lessons.md`). Підтверджений RTC: **DS3231** (I²C, SDA → A4, SCL → A5, адреса 0x68, бібліотека RTClib); у Wokwi його замінює `wokwi-ds1307`. Кнопок у схемі немає — керування командами Serial Monitor. `controller/controller.ino` — поки заготівка. Дисплей і реле ще не обрані — для них не додавай непідтверджених пінів і бібліотек.

@@ -2,13 +2,13 @@
 
 Кожен урок — окрема папка з планом (`README.md`), а коли є код — зі скетчем і схемою для Wokwi. Повний план курсу: [`dev/lessons.md`](../dev/lessons.md).
 
-Основна плата: **Arduino Uno**. MP3-модуль: **DFPlayer Mini**.
+Основна плата: **Arduino Uno**. MP3-модуль: **DFPlayer Mini**. Годинник: **DS3231** (з уроку 2). Кнопок у схемі немає.
 
 | # | Урок | Mission | Код |
 | --- | --- | --- | --- |
 | 1 | [Make it speak 🔊](lesson-01-make-it-speak/) | Uno + DFPlayer Mini + динамік → перший звук | ✅ скетч + Wokwi |
-| 2 | [Make it know the time ⏰](lesson-02-know-the-time/) | Пристрій знає поточний час (RTC) | ⏳ RTC не обрано |
-| 3 | [Make it automatic ⚙️](lesson-03-make-it-automatic/) | TIME + AUDIO: трек за розкладом | ⏳ |
+| 2 | [Make it know the time ⏰](lesson-02-know-the-time/) | DS3231 + шкільний розклад в EEPROM | ✅ скетч + Wokwi |
+| 3 | [Make it automatic ⚙️](lesson-03-make-it-automatic/) | Розклад налаштовується без перепрошивки | ⏳ |
 | 4 | [Керуємо підсвічувачем 💡](lesson-04-control-light/) | Навантаження вмикається разом із треком | ⏳ драйвер не обрано |
 | 5 | [Display / UI 🖥️](lesson-05-display-ui/) | Пристрій показує стан | ⏳ дисплей не обрано |
 | 6 | [Integration & QA 🧪](lesson-06-integration-qa/) | Усе разом, тести, Final Demo | ⏳ |
