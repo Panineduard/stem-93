@@ -1,0 +1,43 @@
+name: Lesson 4 demo and cancel
+version: 1
+author: STEM-93
+# Коротко A+B, поки грає, — стоп. Утримання A+B 20 с — демо: логотип, 5 карток команди,
+# потім реле і цитата дня. Коротко A+B зупиняє і цю цитату.
+steps:
+  - wait-serial: 'Кнопки: A+B'
+  - write-serial: "CLOCK OFF\n"
+  - delay: 100ms
+  - write-serial: "SET 2026-10-16 10:00:00\n"
+  - wait-serial: 'Годинник: час встановлено'
+  # 1) Скасування: PLAY, потім клік A+B
+  - write-serial: "PLAY 7\n"
+  - wait-serial: 'ГРАЄ: відтворення підтверджено'
+  - set-control: { part-id: btnA, control: pressed, value: 1 }
+  - delay: 100ms
+  - set-control: { part-id: btnB, control: pressed, value: 1 }
+  - delay: 200ms
+  - set-control: { part-id: btnA, control: pressed, value: 0 }
+  - set-control: { part-id: btnB, control: pressed, value: 0 }
+  - wait-serial: 'Команда: стоп.'
+  - wait-serial: 'ГОТОВО: трек більше не грає'
+  # 2) Утримання A+B 20 с → демо
+  - set-control: { part-id: btnA, control: pressed, value: 1 }
+  - delay: 100ms
+  - set-control: { part-id: btnB, control: pressed, value: 1 }
+  - wait-serial: 'A+B: відлік до демо'
+  - wait-serial: 'ДЕМО'
+  - set-control: { part-id: btnA, control: pressed, value: 0 }
+  - set-control: { part-id: btnB, control: pressed, value: 0 }
+  # логотип 3 с + 5 карток по 3 с → реле, прогрів, цитата
+  - wait-serial: 'ДЕМО: цитата'
+  - wait-serial: 'Прогріваємо підсилювач'
+  - wait-serial: 'ГРАЄ: відтворення підтверджено'
+  # 3) Клік A+B зупиняє і демо-цитату
+  - set-control: { part-id: btnA, control: pressed, value: 1 }
+  - delay: 100ms
+  - set-control: { part-id: btnB, control: pressed, value: 1 }
+  - delay: 200ms
+  - set-control: { part-id: btnA, control: pressed, value: 0 }
+  - set-control: { part-id: btnB, control: pressed, value: 0 }
+  - wait-serial: 'Команда: стоп.'
+  - wait-serial: 'ГОТОВО: трек більше не грає'

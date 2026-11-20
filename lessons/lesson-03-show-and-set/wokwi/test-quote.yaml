@@ -1,0 +1,11 @@
+name: Random quote
+version: 1
+author: STEM-93
+steps:
+  - wait-serial: 'Кнопки: A+B'
+  - write-serial: "CLOCK OFF\n"
+  - delay: 100ms
+  - write-serial: "SET 2026-10-16 12:09:57\n"
+  - wait-serial: 'НАСТАВ ЧАС ПОДІЇ 3) 12:10'
+  - wait-serial: 'ГРАЄ: відтворення підтверджено'
+  - delay: 500ms

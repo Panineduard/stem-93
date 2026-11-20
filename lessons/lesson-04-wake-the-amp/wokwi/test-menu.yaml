@@ -1,0 +1,72 @@
+name: Lesson 4 menu (з уроку 3)
+version: 1
+author: STEM-93
+steps:
+  - wait-serial: 'Кнопки: A+B'
+  - write-serial: "CLOCK OFF\n"
+  - delay: 100ms
+  - write-serial: "SET 2026-10-16 07:59:30\n"
+  - wait-serial: 'Годинник: час встановлено'
+  # A+B → меню 1/3: поточний час. На головному екрані A+B спрацьовує на відпускання
+  # (урок 4: утримання 20 с — демо), у самому меню — одразу, як в уроці 3.
+  - set-control: { part-id: btnA, control: pressed, value: 1 }
+  - delay: 120ms
+  - set-control: { part-id: btnB, control: pressed, value: 1 }
+  - delay: 200ms
+  - set-control: { part-id: btnA, control: pressed, value: 0 }
+  - delay: 40ms
+  - set-control: { part-id: btnB, control: pressed, value: 0 }
+  - wait-serial: 'Меню 1/3'
+  - delay: 200ms
+  # A: 07 → 08 годин (одиночні дії — на відпускання)
+  - set-control: { part-id: btnA, control: pressed, value: 1 }
+  - delay: 150ms
+  - set-control: { part-id: btnA, control: pressed, value: 0 }
+  - wait-serial: 'меню: 08:59'
+  - delay: 200ms
+  # A+B → час записано в DS3231, меню 2/3
+  - set-control: { part-id: btnA, control: pressed, value: 1 }
+  - delay: 100ms
+  - set-control: { part-id: btnB, control: pressed, value: 1 }
+  - wait-serial: 'Годинник встановлено: 2026-10-16 08:59:00'
+  - wait-serial: 'Меню 2/3'
+  - set-control: { part-id: btnA, control: pressed, value: 0 }
+  - delay: 40ms
+  - set-control: { part-id: btnB, control: pressed, value: 0 }
+  - delay: 200ms
+  # B → хвилини, A → 09:01
+  - set-control: { part-id: btnB, control: pressed, value: 1 }
+  - delay: 150ms
+  - set-control: { part-id: btnB, control: pressed, value: 0 }
+  - wait-serial: 'змінюємо хвилини'
+  - set-control: { part-id: btnA, control: pressed, value: 1 }
+  - delay: 150ms
+  - set-control: { part-id: btnA, control: pressed, value: 0 }
+  - wait-serial: 'меню: 09:01'
+  - delay: 200ms
+  # B+A → зберегти, меню 3/3
+  - set-control: { part-id: btnB, control: pressed, value: 1 }
+  - delay: 80ms
+  - set-control: { part-id: btnA, control: pressed, value: 1 }
+  - wait-serial: 'Меню 3/3'
+  - set-control: { part-id: btnA, control: pressed, value: 0 }
+  - delay: 50ms
+  - set-control: { part-id: btnB, control: pressed, value: 0 }
+  - delay: 200ms
+  # утримання A: години біжать 12 → 13 → ...
+  - set-control: { part-id: btnA, control: pressed, value: 1 }
+  - delay: 1400ms
+  - set-control: { part-id: btnA, control: pressed, value: 0 }
+  - delay: 300ms
+  # A+B → зберегти, вихід
+  - set-control: { part-id: btnA, control: pressed, value: 1 }
+  - delay: 120ms
+  - set-control: { part-id: btnB, control: pressed, value: 1 }
+  - wait-serial: 'Меню закрито, розклад збережено'
+  - set-control: { part-id: btnA, control: pressed, value: 0 }
+  - delay: 40ms
+  - set-control: { part-id: btnB, control: pressed, value: 0 }
+  # час, виставлений кнопками, іде далі: о 09:01 подія спрацьовує сама
+  - wait-serial: 'НАСТАВ ЧАС ПОДІЇ 1) 09:01'
+  - wait-serial: 'ГРАЄ: відтворення підтверджено'
+  - delay: 1000ms

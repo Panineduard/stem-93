@@ -1,0 +1,16 @@
+name: Next event stops the previous track
+version: 1
+author: STEM-93
+# Запускати зі схемою, де у DFPlayer trackSeconds = 70 (хвилина мовчання довша за хвилину).
+steps:
+  - wait-serial: 'Кнопки: A+B'
+  - write-serial: "CLOCK OFF\n"
+  - delay: 100ms
+  - write-serial: "SET 2026-10-16 08:59:55\n"
+  - wait-serial: 'НАСТАВ ЧАС ПОДІЇ 1) 09:00'
+  - wait-serial: 'ГРАЄ: відтворення підтверджено'
+  - wait-serial: 'НАСТАВ ЧАС ПОДІЇ 2) 09:01'
+  - wait-serial: 'Зупиняємо попередній трек'
+  - wait-serial: 'Команда: відтворити трек'
+  - wait-serial: 'ГРАЄ: відтворення підтверджено'
+  - delay: 500ms

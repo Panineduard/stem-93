@@ -1,0 +1,1481 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Урок 3 · Show &amp; Listen</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800;900&family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Press+Start+2P&display=swap">
+<style>
+/* Макет: стрічка вертикальних «кліпів». Ліворуч — телефон 9:16 з «відео»,
+   праворуч — панель коментарів, де живе теорія. Глітч-ціан/рожевий лише в заголовках і акцентах.
+   Сторінка свідомо лише світла (так попросив викладач); темними лишаються тільки OLED і плата. */
+:root {
+  --bg: #F6F6F9;
+  --surface: #FFFFFF;
+  --surface-2: #EFEFF4;
+  --line: #E1E1E8;
+  --fg: #16161D;
+  --muted: #6B6B7B;
+  --cyan: #25F4EE;
+  --cyan-ink: #0A8A86;
+  --pink: #FE2C55;
+  --amber: #FFC94A;
+  --amber-ink: #8F6200;
+  --green: #3BE38B;
+  --green-ink: #12884B;
+  --ink-on-accent: #16161D;
+  --oled-bg: #04060A;
+  --oled-px: #D8F3FF;
+  --oled-glow: rgba(140, 220, 255, 0.55);
+  --display: 'Unbounded', 'Arial Black', sans-serif;
+  --body: 'Onest', 'Segoe UI', Arial, sans-serif;
+  --mono: 'JetBrains Mono', Consolas, 'Courier New', monospace;
+  --pixel: 'Press Start 2P', 'Courier New', monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg); color: var(--fg);
+  font: 400 17px/1.55 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 64px;
+  overflow-x: hidden;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+p { margin: 0; }
+a { color: var(--cyan-ink); }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+code, .mono { font-family: var(--mono); }
+
+/* ---------- верхня панель ---------- */
+.topbar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  padding: 12px max(16px, env(safe-area-inset-left, 0px));
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.topbar-in { max-width: 1120px; margin-inline: auto; display: flex; align-items: center; gap: 18px; }
+.brand { font: 800 15px/1 var(--display); letter-spacing: 0.02em; white-space: nowrap; }
+.brand span { color: var(--pink); }
+.tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs a {
+  flex: none; text-decoration: none; color: var(--muted); font: 600 14px/1 var(--body);
+  padding: 9px 13px; border-radius: 999px; white-space: nowrap;
+}
+.tabs a:hover { color: var(--fg); background: var(--surface-2); }
+.tabs a.on { color: var(--fg); background: var(--surface-2); box-shadow: inset 0 -2px 0 var(--pink); }
+
+/* ---------- стрічка ---------- */
+.feed { max-width: 1120px; margin-inline: auto; display: flex; flex-direction: column; gap: 88px; padding-top: 40px; }
+
+.clip {
+  display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 1fr); gap: 36px; align-items: start;
+  scroll-margin-top: 80px;
+}
+.clip-head { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.clip-num { font: 700 13px/1 var(--mono); color: var(--pink); letter-spacing: 0.12em; }
+.clip-head h2 { font: 800 clamp(26px, 3.6vw, 40px)/1.08 var(--display); letter-spacing: -0.01em; }
+
+/* телефон */
+.phone {
+  position: relative; border-radius: 34px; overflow: hidden; isolation: isolate;
+  background: var(--surface); border: 1px solid var(--line);
+  min-height: 680px; display: flex; flex-direction: column;
+  box-shadow: -6px 0 0 -1px rgba(37,244,238,0.7), 6px 0 0 -1px rgba(254,44,85,0.6), 0 24px 50px rgba(30,30,60,0.14);
+}
+.prog { position: absolute; left: 14px; right: 14px; top: 12px; height: 3px; border-radius: 3px; background: rgba(22,22,29,0.12); z-index: 3; overflow: hidden; }
+.prog i { display: block; height: 100%; width: 100%; background: var(--fg); transform-origin: left; transform: scaleX(0.35); }
+.clip.in .prog i { animation: prog 14s linear infinite; }
+@keyframes prog { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.video {
+  flex: 1; position: relative; padding: 46px 76px 26px 22px;
+  display: flex; flex-direction: column; gap: 18px; justify-content: center;
+}
+.video.top { justify-content: flex-start; }
+.vbg { position: absolute; inset: 0; z-index: -1; }
+
+/* права панель дій */
+.rail { position: absolute; right: 10px; bottom: 150px; display: flex; flex-direction: column; align-items: center; gap: 16px; z-index: 2; }
+.rail .who { position: relative; width: 48px; height: 48px; margin-bottom: 8px; }
+.rail .who .ava { width: 48px; height: 48px; border: 2px solid var(--fg); }
+.rail .who b {
+  position: absolute; left: 50%; bottom: -9px; transform: translateX(-50%);
+  width: 20px; height: 20px; border-radius: 50%; background: var(--pink); color: #fff;
+  display: grid; place-items: center; font: 700 15px/1 var(--body);
+}
+.act { text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: 0; padding: 0; cursor: pointer; }
+.act svg { width: 32px; height: 32px; }
+.act span { font: 600 12px/1 var(--body); color: var(--fg); }
+.act.liked svg path { fill: var(--pink); stroke: var(--pink); }
+.act.liked svg { animation: pop 0.35s ease-out; }
+@keyframes pop { 40% { transform: scale(1.35); } }
+.disc {
+  width: 42px; height: 42px; border-radius: 50%; margin-top: 4px;
+  background: radial-gradient(circle, var(--c, var(--pink)) 0 26%, #111 27% 60%, #2a2a2a 61% 64%, #111 65%);
+  border: 6px solid #1b1b1b;
+}
+.clip.in .disc { animation: spin 5s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* підпис знизу */
+.cap { padding: 0 76px 22px 20px; display: flex; flex-direction: column; gap: 8px; position: relative; z-index: 2; }
+.cap .h { font: 700 16px/1.2 var(--body); }
+.cap .h small { font-weight: 500; color: var(--muted); font-size: 13px; margin-left: 6px; }
+.cap p { font-size: 15px; line-height: 1.4; }
+.tag { color: var(--fg); font-weight: 700; }
+.sound { display: flex; gap: 8px; align-items: center; font-size: 14px; overflow: hidden; white-space: nowrap; }
+.sound svg { width: 16px; height: 16px; flex: none; }
+.sound .mq { overflow: hidden; flex: 1; min-width: 0; mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.sound .mq span { display: inline-block; padding-left: 8%; }
+.clip.in .sound .mq span { animation: mq 11s linear infinite; }
+@keyframes mq { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+
+/* аватари */
+.ava {
+  border-radius: 50%; display: grid; place-items: center; flex: none;
+  font: 800 16px/1 var(--display); color: #0B0B10; background: var(--g, linear-gradient(135deg, var(--cyan), var(--pink)));
+}
+.ava.sm { width: 36px; height: 36px; font-size: 13px; }
+.g-anna { --g: linear-gradient(135deg, #8CE9FF, #6B7CFF); }
+.g-den { --g: linear-gradient(135deg, #FFD36E, #FF8A3D); }
+.g-dar { --g: linear-gradient(135deg, #FFA6C9, #C66BFF); }
+.g-ole { --g: linear-gradient(135deg, #8DFFB5, #2BC4A0); }
+.g-eve { --g: linear-gradient(135deg, #FFE38A, #FF6FA0); }
+.g-t { --g: linear-gradient(135deg, var(--cyan), var(--pink)); }
+.g-cdx { --g: linear-gradient(135deg, #E9E9F2, #9C9CAC); }
+
+/* ---------- коментарі ---------- */
+.comments {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 22px;
+  display: flex; flex-direction: column; min-width: 0;
+}
+.comments > header {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 16px 20px; border-bottom: 1px solid var(--line); font: 700 15px/1.2 var(--body);
+}
+.comments > header span { color: var(--muted); font-weight: 500; font-size: 13px; }
+.cbody { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.c { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 12px; }
+.c .n { font: 600 13px/1.2 var(--body); color: var(--muted); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.c .n b { color: var(--fg); font-weight: 700; }
+.c .n i { font-style: normal; font-size: 11px; font-weight: 700; color: var(--pink); border: 1px solid var(--pink); border-radius: 4px; padding: 2px 5px; }
+.c .t { margin-top: 5px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.c .t p { max-width: 62ch; }
+.c .t b { color: var(--cyan-ink); font-weight: 700; }
+.c .t ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; max-width: 62ch; }
+.c.pinned { background: var(--surface-2); border-radius: 14px; padding: 14px; margin: -4px -6px 0; }
+.c .reply { display: flex; gap: 18px; font: 600 12px/1 var(--body); color: var(--muted); }
+
+/* код */
+pre.code {
+  margin: 0; background: #0C0C12; border: 1px solid var(--line); border-radius: 12px;
+  padding: 14px 16px; overflow-x: auto; font: 400 13.5px/1.55 var(--mono); color: #D9D9E6;
+}
+.code .k { color: var(--pink); }
+.code .f { color: var(--cyan); }
+.code .s { color: var(--amber); }
+.code .cm { color: #6F6F84; }
+.code .hl { background: rgba(37,244,238,0.12); display: inline-block; width: 100%; border-radius: 3px; }
+
+/* таблиці */
+.tbl { overflow-x: auto; }
+.tbl table { border-collapse: collapse; width: 100%; font-size: 15px; }
+.tbl th, .tbl td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.tbl th { font: 600 12px/1.2 var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.tbl td code { color: var(--cyan-ink); font-size: 14px; }
+
+/* ---------- OLED ---------- */
+.oled-frame {
+  background: #12161D; border-radius: 10px; padding: 12px 10px 14px; border: 1px solid #2A3240;
+  box-shadow: inset 0 0 0 3px #0C0F14; position: relative;
+}
+.oled-frame .holes { position: absolute; inset: 4px; pointer-events: none; }
+.oled-frame .holes i { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: #05070A; border: 1px solid #2A3240; }
+.oled-pins { display: flex; justify-content: center; gap: 10px; margin-bottom: 8px; }
+.oled-pins span { font: 700 8px/1 var(--mono); color: #8995A8; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.oled-pins span::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #C9A646; }
+.oled {
+  container-type: inline-size; background: var(--oled-bg); aspect-ratio: 2 / 1; width: 100%;
+  border-radius: 2px; overflow: hidden; display: grid; grid-template-rows: repeat(8, 1fr);
+  color: var(--oled-px); text-shadow: 0 0 6px var(--oled-glow);
+  font-family: var(--pixel); font-size: 6.25cqw; line-height: 1;
+}
+.oled .r { white-space: pre; display: flex; align-items: center; overflow: hidden; }
+.oled .r.inv { background: var(--oled-px); color: var(--oled-bg); text-shadow: none; }
+.oled .big {
+  grid-row: span 3; white-space: pre; display: flex; align-items: center; justify-content: center;
+  font-size: 12.5cqw; letter-spacing: 0; transform: scaleY(1.45); font-variant-numeric: tabular-nums;
+}
+
+/* ---------- стрічка: специфічні кліпи ---------- */
+.mega { font: 900 clamp(34px, 9cqw, 46px)/1.02 var(--display); letter-spacing: -0.02em; }
+.glitch { position: relative; text-shadow: -3px 0 0 rgba(37,244,238,0.85), 3px 0 0 rgba(254,44,85,0.85); }
+.clip.in .glitch { animation: glitch 4.5s infinite steps(1); }
+@keyframes glitch {
+  0%, 92%, 100% { text-shadow: -3px 0 0 rgba(37,244,238,0.85), 3px 0 0 rgba(254,44,85,0.85); }
+  94% { text-shadow: 5px 0 0 rgba(37,244,238,0.9), -5px 0 0 rgba(254,44,85,0.9); transform: translateX(2px); }
+  96% { text-shadow: -1px 0 0 rgba(37,244,238,0.9), 1px 0 0 rgba(254,44,85,0.9); transform: none; }
+}
+.video { container-type: inline-size; }
+/* Перший кліп — компактний, щоб уміщався в один екран */
+.feed { padding-top: 20px; }
+#intro .phone { min-height: 0; }
+#intro .video { padding-top: 30px; padding-bottom: 12px; gap: 12px; justify-content: flex-start; }
+#intro .mega { font-size: clamp(26px, 8cqw, 34px); line-height: 1.05; }
+#intro .oled-frame { max-width: 250px; padding: 8px 8px 10px; }
+#intro .oled-pins { margin-bottom: 5px; }
+#intro .rail { bottom: 96px; gap: 12px; }
+#intro .rail .who { margin-bottom: 2px; }
+#intro .cap { padding-bottom: 16px; gap: 6px; }
+#intro .cbody { padding-block: 14px; gap: 14px; }
+.kicker { font: 700 12px/1.2 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--cyan-ink); }
+.sticker {
+  align-self: flex-start; background: var(--fg); color: var(--surface); font: 800 14px/1.2 var(--display);
+  padding: 8px 12px; border-radius: 8px; transform: rotate(-3deg);
+}
+.sticker.pink { background: var(--pink); color: #fff; }
+.sticker.cyan { background: var(--cyan); color: #04211F; }
+.big-line { font: 800 22px/1.25 var(--display); }
+.big-line em { font-style: normal; color: var(--pink); }
+
+/* дует: Serial vs OLED */
+.duet { display: grid; grid-template-rows: 1fr 1fr; gap: 10px; flex: 1; }
+.duet > div { border-radius: 14px; overflow: hidden; position: relative; display: flex; flex-direction: column; justify-content: center; padding: 14px; }
+.duet .l { background: #0E1210; }
+.duet .lbl { position: absolute; top: 8px; left: 10px; font: 700 11px/1 var(--mono); color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+.serial-mini { font: 400 10.5px/1.5 var(--mono); color: #7EE2A0; white-space: pre; overflow: hidden; }
+.duet .r { background: #0B0E16; }
+
+/* RAM */
+.ram { display: flex; flex-direction: column; gap: 10px; }
+.ram-bar { height: 40px; border-radius: 10px; background: var(--surface-2); position: relative; overflow: hidden; border: 1px solid var(--line); }
+.ram-bar i { position: absolute; top: 0; bottom: 0; left: 0; transition: width 0.6s cubic-bezier(.2,.8,.2,1); }
+.ram-bar .used { background: var(--cyan); }
+.ram-bar .buf { background: repeating-linear-gradient(45deg, var(--pink) 0 8px, #B51E3E 8px 16px); }
+.ram-bar .limit { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--fg); }
+.ram-legend { display: flex; justify-content: space-between; font: 600 13px/1.3 var(--mono); color: var(--muted); gap: 8px; flex-wrap: wrap; }
+.ram-verdict { font: 800 20px/1.2 var(--display); }
+.ram-verdict.bad { color: var(--pink); }
+.ram-verdict.ok { color: var(--green-ink); }
+.seg { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 4px; gap: 4px; border: 1px solid var(--line); align-self: flex-start; }
+.seg button { border: 0; background: none; padding: 8px 14px; border-radius: 999px; cursor: pointer; font: 600 14px/1 var(--body); color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--surface); }
+
+/* сітка пікселів */
+.px-wrap { position: relative; }
+.px-grid { width: 100%; aspect-ratio: 2 / 1; display: block; border-radius: 6px; background: var(--oled-bg); }
+.px-note { font: 600 13px/1.4 var(--mono); color: var(--muted); }
+.px-note b { color: var(--cyan); }
+
+/* I2C */
+.bus svg { width: 100%; height: auto; display: block; }
+.bus .pkt { offset-rotate: 0deg; }
+
+/* кнопки: брязкіт */
+.bounce-ui { display: flex; flex-direction: column; gap: 14px; }
+.bigbtn {
+  align-self: center; width: 120px; height: 120px; border-radius: 50%; border: 0; cursor: pointer;
+  background: radial-gradient(circle at 40% 35%, #FF6E8C, var(--pink) 55%, #A0102C);
+  box-shadow: 0 10px 0 #6E0A1E, 0 16px 30px rgba(0,0,0,0.5);
+  font: 800 14px/1.1 var(--display); color: #fff; transition: transform 0.06s, box-shadow 0.06s;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.bigbtn.down { transform: translateY(8px); box-shadow: 0 2px 0 #6E0A1E, 0 6px 14px rgba(0,0,0,0.5); }
+.scope { width: 100%; height: 150px; display: block; background: var(--surface); border-radius: 10px; border: 1px solid var(--line); }
+.counter { display: flex; gap: 10px; flex-wrap: wrap; }
+.counter div { flex: 1; min-width: 120px; background: var(--surface-2); border-radius: 12px; padding: 10px 12px; }
+.counter b { display: block; font: 800 26px/1 var(--display); font-variant-numeric: tabular-nums; }
+.counter span { font: 600 12px/1.3 var(--body); color: var(--muted); }
+.counter .raw b { color: var(--pink); }
+.counter .clean b { color: var(--green-ink); }
+.pin-level { font: 700 15px/1.2 var(--mono); text-align: center; }
+.pin-level b { color: var(--cyan-ink); }
+
+/* ---------- симулятор ---------- */
+.device {
+  background: linear-gradient(160deg, #1B3A2A, #0F2219); border-radius: 18px; padding: 16px;
+  border: 1px solid #2F5A43; display: flex; flex-direction: column; gap: 16px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+}
+.device .silk { font: 700 10px/1.2 var(--mono); color: #CFE8D8; letter-spacing: 0.12em; opacity: 0.7; text-transform: uppercase; display: flex; justify-content: space-between; }
+.hw-btns { display: flex; justify-content: center; gap: 34px; }
+.hw { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.hw button {
+  width: 74px; height: 74px; border-radius: 14px; border: 0; cursor: pointer; position: relative;
+  background: #2B2F36; box-shadow: 0 6px 0 #15181D, inset 0 0 0 4px #3B4049;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.hw button::after {
+  content: ""; position: absolute; inset: 16px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, var(--hi), var(--cap) 60%, var(--lo));
+  box-shadow: 0 3px 0 var(--lo);
+}
+.hw button.a { --hi: #9BFFC9; --cap: #2BD47D; --lo: #127042; }
+.hw button.b { --hi: #A9D8FF; --cap: #3C8DFF; --lo: #183F8A; }
+.hw button.ab { --lo: #1E3A5A; }
+.hw button.ab::after { background: linear-gradient(90deg, #2BD47D 50%, #3C8DFF 50%); }
+.hw-btns { gap: 16px !important; }
+.hw button.down { transform: translateY(5px); box-shadow: 0 1px 0 #15181D, inset 0 0 0 4px #3B4049; }
+.hw button.down::after { box-shadow: none; }
+.hw span { font: 700 12px/1.2 var(--mono); color: #DDEDE3; text-align: center; }
+.hw span kbd { font: 700 11px/1 var(--mono); background: #0F2219; border: 1px solid #2F5A43; border-radius: 4px; padding: 2px 5px; }
+.la { width: 100%; height: 70px; display: block; background: #07090C; border-radius: 8px; }
+.sim-ctrl { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  border: 1px solid var(--line); background: var(--surface-2); border-radius: 999px; padding: 8px 13px;
+  font: 600 13px/1 var(--body); cursor: pointer; color: var(--fg);
+}
+.chip:hover { border-color: var(--cyan); }
+.chip[aria-pressed="true"] { background: var(--fg); color: var(--surface); border-color: var(--fg); }
+.serial {
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; height: 260px; overflow-y: auto;
+  padding: 10px 12px; font: 400 12.5px/1.6 var(--mono); color: #1D5C3A; min-width: 0;
+}
+.serial div { white-space: pre-wrap; word-break: break-word; }
+.serial .w { color: var(--amber-ink); }
+.serial .e { color: var(--pink); }
+.serial .p { color: var(--cyan-ink); }
+.fsm svg { width: 100%; height: auto; display: block; }
+.fsm .node rect { fill: var(--surface-2); stroke: var(--line); stroke-width: 2; transition: fill 0.2s, stroke 0.2s; }
+.fsm .node text { fill: var(--fg); font: 700 13px var(--mono); }
+.fsm .node.on rect { fill: var(--pink); stroke: var(--pink); }
+.fsm .node.on text { fill: #fff; }
+.fsm .edge { stroke: var(--muted); stroke-width: 2; fill: none; }
+.fsm .elbl { fill: var(--muted); font: 600 11px var(--mono); }
+
+/* схема */
+.wiring svg { width: 100%; height: auto; display: block; }
+
+/* плейлист */
+.pl { display: flex; flex-direction: column; gap: 8px; }
+.pl-item { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 12px; align-items: center; background: rgba(255,255,255,0.06); border-radius: 12px; padding: 8px; }
+.pl-thumb { aspect-ratio: 9/12; border-radius: 8px; display: grid; place-items: end start; padding: 6px; font: 700 11px/1 var(--mono); color: #fff; background: var(--g); }
+.pl-item b { display: block; font: 700 15px/1.25 var(--body); }
+.pl-item span { font-size: 13px; color: var(--muted); }
+
+/* челендж і DoD */
+.todo { display: flex; flex-direction: column; gap: 8px; }
+.todo label { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: start; background: var(--surface-2); padding: 12px 14px; border-radius: 12px; cursor: pointer; }
+.todo input { width: 20px; height: 20px; accent-color: var(--pink); margin: 2px 0 0; }
+.todo label:has(input:checked) span { color: var(--muted); text-decoration: line-through; }
+.stat { display: flex; gap: 10px; align-items: flex-start; }
+.stat .dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 7px; flex: none; }
+.dot.ok { background: var(--green-ink); }
+.dot.wait { background: var(--amber); }
+.shots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.shots figure { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.shots img { width: 100%; image-rendering: pixelated; border-radius: 4px; border: 1px solid var(--line); background: #000; }
+.shots figcaption { font: 600 12px/1.3 var(--mono); color: var(--muted); }
+
+footer.end { max-width: 1120px; margin: 64px auto 0; color: var(--muted); font-size: 14px; display: flex; flex-direction: column; gap: 6px; }
+
+@media (max-width: 900px) {
+  .clip { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .phone { max-width: 440px; width: 100%; margin-inline: auto; }
+}
+@media (max-width: 420px) {
+  .phone { min-height: 620px; border-radius: 26px; }
+  .video { padding-right: 68px; padding-left: 16px; }
+  .cap { padding-left: 16px; padding-right: 68px; }
+  .shots { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  html { scroll-behavior: auto; }
+}
+</style>
+<style>
+/* профілі команди */
+.team { display: flex; flex-direction: column; gap: 28px; scroll-margin-top: 80px; }
+.team-head { display: flex; flex-direction: column; gap: 8px; }
+.team-head h2 { font: 800 clamp(26px, 3.6vw, 40px)/1.08 var(--display); }
+.team-head p { color: var(--muted); max-width: 60ch; }
+/* Уся команда в один ряд; на вузькому екрані ряд гортається вбік, а не переноситься */
+.profiles {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(180px, 1fr); gap: 14px;
+  overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 12px;
+}
+.profiles .prof { scroll-snap-align: start; }
+.prof {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 24px; overflow: hidden;
+  display: flex; flex-direction: column; box-shadow: 0 14px 30px rgba(30, 30, 60, 0.07);
+  transition: transform 0.2s;
+}
+.prof:hover { transform: translateY(-4px); }
+.prof .cover { height: 64px; background: var(--g); position: relative; }
+.prof .cover span { position: absolute; right: 12px; top: 10px; font: 700 11px/1 var(--mono); color: #fff; background: rgba(0,0,0,0.25); padding: 5px 8px; border-radius: 999px; }
+.prof .pin { padding: 0 12px 14px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; flex: 1; }
+.prof .vid { margin-top: auto; }
+.prof .face { position: relative; z-index: 1; flex: none; width: 84px; height: 84px; margin-top: -42px; border-radius: 50%; border: 4px solid var(--surface); background: var(--g); overflow: hidden; }
+.prof .face svg { width: 100%; height: 100%; display: block; }
+.prof .nick { font: 900 16px/1.15 var(--display); }
+.prof .who2 { font: 600 12px/1.3 var(--body); color: var(--muted); }
+.prof .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; width: 100%; }
+.prof .stats b { display: block; font: 800 15px/1.1 var(--display); font-variant-numeric: tabular-nums; }
+.prof .stats span { font: 500 12px/1.2 var(--body); color: var(--muted); }
+.prof .follow { border: 0; cursor: pointer; background: var(--pink); color: #fff; font: 700 15px/1 var(--body); padding: 11px 0; border-radius: 6px; width: 100%; }
+.prof .follow[aria-pressed="true"] { background: var(--surface-2); color: var(--fg); }
+.prof .bio { font-size: 13px; line-height: 1.4; }
+.prof .chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.prof .chips span { font: 600 12px/1 var(--body); background: var(--surface-2); padding: 7px 10px; border-radius: 999px; }
+.prof .vid { font: 700 13px/1 var(--body); color: var(--fg); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; }
+.prof .vid:hover { border-color: var(--pink); color: var(--pink); }
+
+/* танці аватарів: кожен танцює по-своєму */
+.prof .face svg { overflow: visible; }
+.dancer, .head, .arm { transform-box: view-box; }
+.dancer { transform-origin: 50px 100px; animation: bob 0.9s ease-in-out infinite; }
+.head { transform-origin: 50px 62px; animation: nod 0.9s ease-in-out infinite; }
+.arm.l { transform-origin: 32px 80px; }
+.arm.r { transform-origin: 68px 80px; }
+@keyframes bob { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-4px) rotate(3deg); } }
+@keyframes nod { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(5deg); } }
+@keyframes waveL { 0%, 100% { transform: rotate(40deg); } 50% { transform: rotate(-15deg); } }
+@keyframes waveR { 0%, 100% { transform: rotate(-15deg); } 50% { transform: rotate(-40deg); } }
+@keyframes pumpR { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-45deg); } }
+@keyframes downL { 0%, 100% { transform: rotate(55deg); } 50% { transform: rotate(45deg); } }
+@keyframes downR { 0%, 100% { transform: rotate(-55deg); } 50% { transform: rotate(-45deg); } }
+@keyframes shuffle { 0%, 100% { transform: translateX(-4px) rotate(-4deg); } 50% { transform: translateX(4px) rotate(4deg); } }
+@keyframes hooray { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-12deg); } }
+@keyframes hoorayR { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(12deg); } }
+/* Анна — махає руками по черзі */
+#p-anna .arm.l { animation: waveL 0.9s ease-in-out infinite; }
+#p-anna .arm.r { animation: waveL 0.9s ease-in-out infinite reverse; }
+/* Денис — робот: різкі рухи */
+#p-den .dancer { animation: bob 0.8s steps(2) infinite; }
+#p-den .head { animation: nod 0.8s steps(2) infinite; }
+#p-den .arm.l { animation: waveL 0.8s steps(2) infinite; }
+#p-den .arm.r { animation: waveR 0.8s steps(2) infinite; }
+/* Дарина — діджей: киває, одна рука качає */
+#p-dar .head { animation: nod 0.5s ease-in-out infinite; }
+#p-dar .arm.l { animation: downL 0.5s ease-in-out infinite; }
+#p-dar .arm.r { animation: pumpR 0.5s ease-in-out infinite; }
+/* Олекса — шафл зі сторони в сторону */
+#p-ole .dancer { animation: shuffle 0.7s ease-in-out infinite; }
+#p-ole .arm.l { animation: downL 0.7s ease-in-out infinite; }
+#p-ole .arm.r { animation: downR 0.7s ease-in-out infinite; }
+/* Евеліна — «ура!», руки вгору */
+#p-eve .dancer { animation: bob 0.6s ease-in-out infinite; }
+#p-eve .arm.l { animation: hooray 0.6s ease-in-out infinite; }
+#p-eve .arm.r { animation: hoorayR 0.6s ease-in-out infinite; }
+/* діскотека: швидше + кольорове світло */
+.team.party .dancer, .team.party .head, .team.party .arm { animation-duration: 0.4s !important; }
+.team.party .prof .cover { animation: disco 1.2s linear infinite; }
+.team.party .prof .face { box-shadow: 0 0 0 4px var(--pink), 0 0 24px rgba(254,44,85,0.5); }
+@keyframes disco { to { filter: hue-rotate(360deg); } }
+.party-btn {
+  align-self: flex-start; border: 2px solid var(--fg); background: var(--surface); color: var(--fg);
+  font: 800 14px/1 var(--display); padding: 11px 16px; border-radius: 999px; cursor: pointer;
+}
+.party-btn[aria-pressed="true"] { background: var(--fg); color: var(--surface); }
+
+/* заставка STEM 93 під час запуску (сітка 16×8, як у showLogo()) */
+.logo { grid-row: 1 / -1; display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); grid-template-rows: repeat(8, minmax(0, 1fr)); }
+.logo .b1 { grid-column: 2 / span 2; grid-row: 2 / span 2; }
+.logo .b2 { grid-column: 14 / span 2; grid-row: 2 / span 2; }
+.logo svg { width: 100%; height: auto; display: block; }
+.logo .stem { grid-column: 5 / span 8; grid-row: 2 / span 2; font-size: 12.5cqw; line-height: 1; align-self: center; }
+.logo .line { grid-column: 2 / span 14; grid-row: 4; align-self: center; height: 1.6cqw; background: var(--oled-px); box-shadow: 0 0 6px var(--oled-glow); }
+.logo .num { grid-column: 7 / span 4; grid-row: 5 / span 2; font-size: 12.5cqw; line-height: 1; align-self: center; }
+.logo .sb { grid-column: 3 / span 12; grid-row: 8; font-size: 6.25cqw; line-height: 1; white-space: pre; align-self: center; }
+
+/* OLED з іконками: 4 лінії по 2 рядки клітинок, 16 стовпців */
+.oled2 { display: grid; grid-template-rows: repeat(4, 1fr); }
+.ol { display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); align-items: center; min-height: 0; }
+.ol .ic { grid-column: 1 / span 2; }
+.ol .mk { grid-column: 15 / span 2; }
+.ol .ic svg, .ol .mk svg { width: 100%; height: auto; display: block; }
+.ol .tm { grid-column: 4 / span 10; font-size: 12.5cqw; line-height: 1; white-space: pre; }
+.ol .tm .inv { background: var(--oled-px); color: var(--oled-bg); text-shadow: none; }
+.ol.hint { align-items: end; }
+.ol.hint span { grid-column: 1 / -1; font-size: 6.25cqw; white-space: pre; line-height: 1; }
+</style>
+<!-- спільні іконки -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.2 4.3 2.4h2c.7-1.2 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z" fill="#16161D" stroke="#16161D" stroke-width="1"/></symbol>
+    <symbol id="i-comment" viewBox="0 0 24 24"><path d="M12 3.5c5 0 9 3.3 9 7.6s-4 7.6-9 7.6c-.9 0-1.8-.1-2.6-.3L4.5 20.5l1.3-4.1C4.1 15 3 13.1 3 11.1 3 6.8 7 3.5 12 3.5z" fill="#16161D"/><circle cx="8" cy="11.2" r="1.3" fill="#FFFFFF"/><circle cx="12" cy="11.2" r="1.3" fill="#FFFFFF"/><circle cx="16" cy="11.2" r="1.3" fill="#FFFFFF"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z" fill="#16161D"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><path d="M13 4l8 7.5-8 7.5v-4.6c-5.3 0-8.4 1.5-10 5.1.6-5.6 3.6-10.3 10-11V4z" fill="#16161D"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24"><path d="M9 18.5a2.5 2.5 0 1 1-2.5-2.5c.5 0 1 .1 1.5.4V5l11-2v12.5a2.5 2.5 0 1 1-2.5-2.5c.5 0 1 .1 1.5.4V7.2l-9 1.7v9.6z" fill="#16161D"/></symbol>
+  </defs>
+</svg>
+
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">STEM<span>·</span>93</div>
+    <nav class="tabs" aria-label="Розділи уроку">
+      <a href="#intro" class="on">Для тебе</a>
+      <a href="#team">Команда</a>
+      <a href="#anna">Дисплей</a>
+      <a href="#i2c">I²C</a>
+      <a href="#bounce">Кнопки</a>
+      <a href="#sim">Симулятор</a>
+      <a href="#wiring">Схема</a>
+      <a href="#challenge">Челендж</a>
+    </nav>
+  </div>
+</header>
+
+<main class="feed">
+
+<!-- ===================== ІНТРО ===================== -->
+<article class="clip" id="intro">
+  <div class="phone">
+    <div class="prog"><i></i></div>
+    <div class="video">
+      <div class="vbg" style="background: radial-gradient(120% 70% at 20% 0%, rgba(37,244,238,0.18), transparent 60%), radial-gradient(100% 60% at 100% 100%, rgba(254,44,85,0.22), transparent 60%);"></div>
+      <div class="kicker">Урок 3 · Smart School Bell</div>
+      <h1 class="mega glitch">Make it show<br>&amp; listen</h1>
+      <div class="oled-frame" aria-label="OLED показує поточний час">
+        <div class="oled-pins"><span>GND</span><span>VCC</span><span>SCL</span><span>SDA</span></div>
+        <div class="oled oled2" id="heroOled"></div>
+        </div>
+      </div>
+    </div>
+    <div class="rail">
+      <div class="who"><div class="ava g-t">93</div><b>+</b></div>
+      <button class="act" type="button" aria-label="Вподобати"><svg><use href="#i-heart"/></svg><span>9:00</span></button>
+      <a class="act" href="#mission" aria-label="Коментарі"><svg><use href="#i-comment"/></svg><span>2</span></a>
+      <div class="disc"></div>
+    </div>
+    <div class="cap">
+      <div class="h">@stem93 <small>урок 3 з 6</small></div>
+      <p>Пристрій <b>показує</b> час на екрані і <b>слухається</b> двох кнопок. <span class="tag">#arduino #oled #урок3</span></p>
+      <div class="sound"><svg><use href="#i-note"/></svg><div class="mq"><span>оригінальний звук — DFPlayer Mini · 0002.mp3 ·</span></div></div>
+    </div>
+  </div>
+  <aside class="comments" id="mission">
+    <header>Що сьогодні робимо <span>закріплено</span></header>
+    <div class="cbody">
+      <div class="c pinned">
+        <div class="ava sm g-t">93</div>
+        <div>
+          <div class="n"><b>@stem93</b><i>автор</i></div>
+          <div class="t">
+            <p>Беремо пристрій з уроку 2 і додаємо:</p>
+            <ul>
+              <li><b>OLED-дисплей</b>: поточний час і розклад — іконками, без слів.</li>
+              <li><b>Дві кнопки</b>: змінюємо розклад без ноутбука.</li>
+            </ul>
+            <p><b>A+B</b> → поточний час → <b>A+B</b> → хвилина мовчання → <b>A+B</b> → цитата дня → <b>A+B</b> → зберегти.</p>
+            <p>Час записується в годинник DS3231, розклад — в EEPROM. Обидва переживають вимкнення.</p>
+          </div>
+        </div>
+      </div>
+      <div class="c">
+        <div class="ava sm g-dar">Д</div>
+        <div>
+          <div class="n"><b>Дарина</b> @darsilzx08</div>
+          <div class="t"><p>А гімн? Його теж налаштовувати?</p></div>
+        </div>
+      </div>
+      <div class="c">
+        <div class="ava sm g-t">93</div>
+        <div>
+          <div class="n"><b>@stem93</b><i>автор</i></div>
+          <div class="t"><p>Ні, гімн завжди звучить через хвилину після хвилини мовчання.</p></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</article>
+
+<!-- ===================== КОМАНДА ===================== -->
+<section class="team" id="team">
+  <div class="team-head">
+    <span class="kicker">Автори уроку · STEAM 93</span>
+    <h2>Команда</h2>
+    <p>Кожен відповідає за свою частину пристрою. Ніки придумані для уроку: не ображатись, а пишатись 😎</p>
+    <button class="party-btn" type="button" id="partyBtn" aria-pressed="false">🪩 Діскотека</button>
+  </div>
+  <div class="profiles">
+    <article class="prof" id="p-anna" style="--g: linear-gradient(135deg, #8CE9FF, #6B7CFF)">
+      <div class="cover"><span>128×64</span></div>
+      <div class="pin">
+        <div class="face"><svg viewBox="0 0 100 100" aria-hidden="true">
+
+<g class="dancer"><path d="M16 102 C18 80 33 71 50 71 C67 71 82 80 84 102 Z" fill="#6B7CFF"/><g class="arm l"><path d="M32 80 Q22 72 18 61" stroke="#6B7CFF" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="18" cy="59" r="4" fill="#F2C9A8"/></g><g class="arm r"><path d="M68 80 Q78 72 82 61" stroke="#6B7CFF" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="82" cy="59" r="4" fill="#F2C9A8"/></g><g class="head">
+<path d="M28 46 C26 23 74 23 72 46 L75 77 C68 81 60 79 58 72 L42 72 C40 79 32 81 25 77 Z" fill="#5B3A29"/>
+<rect x="44" y="60" width="12" height="13" rx="4" fill="#F2C9A8"/>
+<circle cx="50" cy="45" r="20" fill="#F2C9A8"/>
+<path d="M29 46 C27 25 41 19 51 19 C64 19 74 28 71 47 C68 37 60 31 50 31 C40 31 33 37 29 46 Z" fill="#5B3A29"/>
+<path d="M40.5 44.5 L38 42.5 M59.5 44.5 L62 42.5" stroke="#1A1A22" stroke-width="1.6" stroke-linecap="round"/><circle cx="43" cy="47" r="2.3" fill="#1A1A22"/><circle cx="57" cy="47" r="2.3" fill="#1A1A22"/>
+<circle cx="39" cy="53" r="3" fill="#FF7A90" opacity="0.35"/><circle cx="61" cy="53" r="3" fill="#FF7A90" opacity="0.35"/>
+<path d="M44 55 Q50 60.5 56 55" stroke="#1A1A22" stroke-width="2" fill="none" stroke-linecap="round"/>
+<g fill="rgba(37,244,238,0.3)" stroke="#16161D" stroke-width="2.4"><rect x="36" y="41" width="13" height="11"/><rect x="51" y="41" width="13" height="11"/></g><path d="M49 45 H51" stroke="#16161D" stroke-width="2.4"/><g fill="#fff"><rect x="66" y="80" width="4" height="4"/><rect x="70" y="84" width="4" height="4"/><rect x="66" y="88" width="4" height="4"/><rect x="74" y="80" width="4" height="4"/></g>
+<rect x="62" y="30" width="7" height="4" rx="2" fill="#25F4EE" stroke="#16161D" stroke-width="1"/></g></g></svg></div>
+        <div class="nick">Піксель-Детектив</div>
+        <div class="who2">@anettt_ti · Анна · дисплей OLED</div>
+        <div class="stats"><div><b>128</b><span>підписки</span></div><div><b>64</b><span>підписники</span></div><div><b>1024</b><span>вподобайки</span></div></div>
+        <button class="follow" type="button" aria-pressed="false">Стежити</button>
+        <p class="bio">Знайшла, куди зникає 1 КБ пам'яті 🕵️ OLED SSD1306 — мій розмір екрана. Adafruit? Не на моїй Uno.</p>
+        <div class="chips"><span>SSD1306</span><span>U8x8</span><span>RAM 2 КБ</span></div>
+        <a class="vid" href="#anna">▶ Дивитись кліп</a>
+      </div>
+    </article>
+    <article class="prof" id="p-den" style="--g: linear-gradient(135deg, #FFD36E, #FF8A3D)">
+      <div class="cover"><span>0x68</span></div>
+      <div class="pin">
+        <div class="face"><svg viewBox="0 0 100 100" aria-hidden="true">
+
+<g class="dancer"><path d="M16 102 C18 80 33 71 50 71 C67 71 82 80 84 102 Z" fill="#FF8A3D"/><g class="arm l"><path d="M32 80 Q22 72 18 61" stroke="#FF8A3D" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="18" cy="59" r="4" fill="#E9B48F"/></g><g class="arm r"><path d="M68 80 Q78 72 82 61" stroke="#FF8A3D" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="82" cy="59" r="4" fill="#E9B48F"/></g><g class="head">
+<rect x="44" y="60" width="12" height="13" rx="4" fill="#E9B48F"/>
+<circle cx="50" cy="45" r="20" fill="#E9B48F"/>
+<path d="M29 42 L32 25 L38 32 L43 20 L50 30 L56 19 L61 31 L67 23 L71 42 C64 33 36 33 29 42 Z" fill="#2E2A26"/>
+<circle cx="43" cy="47" r="2.3" fill="#1A1A22"/><circle cx="57" cy="47" r="2.3" fill="#1A1A22"/>
+<circle cx="39" cy="53" r="3" fill="#FF7A90" opacity="0.35"/><circle cx="61" cy="53" r="3" fill="#FF7A90" opacity="0.35"/>
+<path d="M44 55 Q50 60.5 56 55" stroke="#1A1A22" stroke-width="2" fill="none" stroke-linecap="round"/>
+<circle cx="67" cy="86" r="9" fill="#fff" stroke="#16161D" stroke-width="2"/><path d="M67 86 V80 M67 86 H72" stroke="#16161D" stroke-width="2" stroke-linecap="round"/>
+</g></g></svg></div>
+        <div class="nick">Тік-Так 0x68</div>
+        <div class="who2">@deny_19 · Денис · годинник DS3231</div>
+        <div class="stats"><div><b>24</b><span>підписки</span></div><div><b>60</b><span>підписники</span></div><div><b>104</b><span>вподобайки</span></div></div>
+        <button class="follow" type="button" aria-pressed="false">Стежити</button>
+        <p class="bio">Знаю, котра година, навіть без інтернету ⏰ DS3231 на адресі 0x68. Батарейка CR2032 — мій павербанк.</p>
+        <div class="chips"><span>RTC</span><span>I²C</span><span>CR2032</span></div>
+        <a class="vid" href="#i2c">▶ Дивитись кліп</a>
+      </div>
+    </article>
+    <article class="prof" id="p-dar" style="--g: linear-gradient(135deg, #FFA6C9, #C66BFF)">
+      <div class="cover"><span>0003.mp3</span></div>
+      <div class="pin">
+        <div class="face"><svg viewBox="0 0 100 100" aria-hidden="true">
+
+<g class="dancer"><path d="M16 102 C18 80 33 71 50 71 C67 71 82 80 84 102 Z" fill="#C66BFF"/><g class="arm l"><path d="M32 80 Q22 72 18 61" stroke="#C66BFF" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="18" cy="59" r="4" fill="#F5D3B8"/></g><g class="arm r"><path d="M68 80 Q78 72 82 61" stroke="#C66BFF" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="82" cy="59" r="4" fill="#F5D3B8"/></g><path d="M44 72 L46 80 M56 72 L54 80" stroke="#16161D" stroke-width="1.5"/><rect x="41" y="79" width="18" height="12" rx="2" fill="#16161D"/><rect x="44" y="77" width="5" height="3" fill="#16161D"/><circle cx="50" cy="85" r="4" fill="#9AD4FF" stroke="#fff" stroke-width="1.2"/><circle cx="56" cy="81.5" r="1" fill="#FFC94A"/><g class="head">
+<path d="M27 46 C25 23 75 23 73 46 C78 56 71 63 77 73 C70 81 62 79 59 72 L41 72 C38 79 30 81 23 73 C29 63 22 56 27 46 Z" fill="#7A3E2E"/>
+<rect x="44" y="60" width="12" height="13" rx="4" fill="#F5D3B8"/>
+<circle cx="50" cy="45" r="20" fill="#F5D3B8"/>
+<path d="M28 50 C24 26 40 18 51 18 C66 18 76 28 72 50 C70 40 62 30 50 30 C38 30 31 40 28 50 Z" fill="#7A3E2E"/>
+<path d="M40.5 44.5 L38 42.5 M59.5 44.5 L62 42.5" stroke="#1A1A22" stroke-width="1.6" stroke-linecap="round"/><circle cx="43" cy="47" r="2.3" fill="#1A1A22"/><circle cx="57" cy="47" r="2.3" fill="#1A1A22"/>
+<circle cx="39" cy="53" r="3" fill="#FF7A90" opacity="0.35"/><circle cx="61" cy="53" r="3" fill="#FF7A90" opacity="0.35"/>
+<path d="M44 55 Q50 60.5 56 55" stroke="#1A1A22" stroke-width="2" fill="none" stroke-linecap="round"/>
+<path d="M27 46 C27 18 73 18 73 46" stroke="#16161D" stroke-width="5" fill="none"/><rect x="22" y="40" width="9" height="15" rx="4" fill="#FE2C55"/><rect x="69" y="40" width="9" height="15" rx="4" fill="#FE2C55"/><path d="M70 74 h20 a4 4 0 0 1 4 4 v8 a4 4 0 0 1 -4 4 h-12 l-5 5 v-5 h-3 a4 4 0 0 1 -4 -4 v-8 a4 4 0 0 1 4 -4 z" fill="#fff" stroke="#16161D" stroke-width="1.5"/><text x="80" y="88" text-anchor="middle" font-family="Georgia, serif" font-size="13" font-weight="700" fill="#16161D">“”</text>
+</g></g></svg></div>
+        <div class="nick">DJ Цитатник</div>
+        <div class="who2">@darsilzx08 · Дарина · звук, цитати, фото</div>
+        <div class="stats"><div><b>3</b><span>підписки</span></div><div><b>20</b><span>підписники</span></div><div><b>9600</b><span>вподобайки</span></div></div>
+        <button class="follow" type="button" aria-pressed="false">Стежити</button>
+        <p class="bio">Відповідаю за все, що звучить 🎧 і за те, як нас побачать 📸 Кореспондентка команди: фоторепортаж для статті про урок 3.</p>
+        <div class="chips"><span>MP3</span><span>US-5</span><span>📸 кореспондентка</span></div>
+        <a class="vid" href="#intro">▶ Дивитись кліп</a>
+      </div>
+    </article>
+    <article class="prof" id="p-ole" style="--g: linear-gradient(135deg, #8DFFB5, #2BC4A0)">
+      <div class="cover"><span>етап 3/6</span></div>
+      <div class="pin">
+        <div class="face"><svg viewBox="0 0 100 100" aria-hidden="true">
+
+<g class="dancer"><path d="M16 102 C18 80 33 71 50 71 C67 71 82 80 84 102 Z" fill="#2BC4A0"/><g class="arm l"><path d="M32 80 Q22 72 18 61" stroke="#2BC4A0" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="18" cy="59" r="4" fill="#D9A07A"/></g><g class="arm r"><path d="M68 80 Q78 72 82 61" stroke="#2BC4A0" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="82" cy="59" r="4" fill="#D9A07A"/></g><g class="head">
+<rect x="44" y="60" width="12" height="13" rx="4" fill="#D9A07A"/>
+<circle cx="50" cy="45" r="20" fill="#D9A07A"/>
+<path d="M31 42 C33 34 40 32 50 32 C60 32 67 34 69 42 L69 38 C69 30 62 27 50 27 C38 27 31 30 31 38 Z" fill="#3B2A20"/>
+<circle cx="43" cy="47" r="2.3" fill="#1A1A22"/><circle cx="57" cy="47" r="2.3" fill="#1A1A22"/>
+<circle cx="39" cy="53" r="3" fill="#FF7A90" opacity="0.35"/><circle cx="61" cy="53" r="3" fill="#FF7A90" opacity="0.35"/>
+<path d="M44 55 Q50 60.5 56 55" stroke="#1A1A22" stroke-width="2" fill="none" stroke-linecap="round"/>
+<path d="M28 38 C28 19 72 19 72 38 Z" fill="#FFC94A" stroke="#16161D" stroke-width="2"/><rect x="24" y="36" width="52" height="6" rx="3" fill="#FFC94A" stroke="#16161D" stroke-width="2"/><rect x="47" y="21" width="6" height="15" fill="#F2B21C"/><circle cx="67" cy="86" r="8" fill="#fff" stroke="#16161D" stroke-width="2"/><path d="M67 80 L70 86 L67 92 L64 86 Z" fill="#FE2C55"/>
+</g></g></svg></div>
+        <div class="nick">Навігатор SDLC</div>
+        <div class="who2">@olemsa1147 · Олекса · етапи розробки</div>
+        <div class="stats"><div><b>6</b><span>підписки</span></div><div><b>90</b><span>підписники</span></div><div><b>404</b><span>вподобайки</span></div></div>
+        <button class="follow" type="button" aria-pressed="false">Стежити</button>
+        <p class="bio">Від ідеї до пристрою за 6 етапів 🧭 Вимоги → дизайн → розробка → тести. Зараз ми на етапі «розробка».</p>
+        <div class="chips"><span>SDLC</span><span>вимоги</span><span>тести</span></div>
+        <a class="vid" href="#intro">▶ Дивитись кліп</a>
+      </div>
+    </article>
+    <article class="prof" id="p-eve" style="--g: linear-gradient(135deg, #FFE38A, #FF6FA0)">
+      <div class="cover"><span>Sprint 3</span></div>
+      <div class="pin">
+        <div class="face"><svg viewBox="0 0 100 100" aria-hidden="true">
+
+<g class="dancer"><path d="M16 102 C18 80 33 71 50 71 C67 71 82 80 84 102 Z" fill="#FF6FA0"/><g class="arm l"><path d="M32 80 Q22 72 18 61" stroke="#FF6FA0" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="18" cy="59" r="4" fill="#F0C4A0"/></g><g class="arm r"><path d="M68 80 Q78 72 82 61" stroke="#FF6FA0" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="82" cy="59" r="4" fill="#F0C4A0"/></g><g class="head">
+<path d="M29 44 C27 26 73 26 71 44 L74 76 C68 81 61 79 59 72 L41 72 C39 79 32 81 26 76 Z" fill="#B5652E"/>
+<rect x="44" y="60" width="12" height="13" rx="4" fill="#F0C4A0"/>
+<circle cx="50" cy="45" r="20" fill="#F0C4A0"/>
+<path d="M29 52 C25 34 33 30 36 34 L36 46 Z M71 52 C75 34 67 30 64 34 L64 46 Z" fill="#B5652E"/>
+<path d="M40.5 44.5 L38 42.5 M59.5 44.5 L62 42.5" stroke="#1A1A22" stroke-width="1.6" stroke-linecap="round"/><circle cx="43" cy="47" r="2.3" fill="#1A1A22"/><circle cx="57" cy="47" r="2.3" fill="#1A1A22"/>
+<circle cx="39" cy="53" r="3" fill="#FF7A90" opacity="0.35"/><circle cx="61" cy="53" r="3" fill="#FF7A90" opacity="0.35"/>
+<path d="M44 55 Q50 60.5 56 55" stroke="#1A1A22" stroke-width="2" fill="none" stroke-linecap="round"/>
+<path d="M29 34 C31 20 69 20 71 34 Z" fill="#1F2A5C"/><ellipse cx="50" cy="35" rx="24" ry="4" fill="#16161D"/><circle cx="50" cy="27" r="3.5" fill="#FFC94A"/><rect x="60" y="78" width="15" height="15" rx="2" fill="#FFE38A" stroke="#16161D" stroke-width="1.5" transform="rotate(-8 67 85)"/><path d="M63 84 l3 3 l6 -6" stroke="#12884B" stroke-width="2" fill="none"/>
+<circle cx="73" cy="70" r="3" fill="#FE2C55"/></g></g></svg></div>
+        <div class="nick">Капітан Спринту</div>
+        <div class="who2">@llinave · Евеліна · Scrum</div>
+        <div class="stats"><div><b>5</b><span>підписки</span></div><div><b>14</b><span>підписники</span></div><div><b>100%</b><span>вподобайки</span></div></div>
+        <button class="follow" type="button" aria-pressed="false">Стежити</button>
+        <p class="bio">Спринти, дейлі, ретро 🏁 Backlog → In Progress → Done. Готово — це коли виконано Definition of Done, а не «майже».</p>
+        <div class="chips"><span>Scrum</span><span>Trello</span><span>DoD</span></div>
+        <a class="vid" href="#challenge">▶ Дивитись кліп</a>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ===================== АННА: ДИСПЛЕЙ ===================== -->
+<article class="clip" id="anna">
+  <div class="clip-head"><span class="clip-num">КЛІП 01</span><h2>Дисплей і пам'ять</h2></div>
+  <div class="phone">
+    <div class="prog"><i></i></div>
+    <div class="video">
+      <div class="vbg" style="background: radial-gradient(90% 60% at 80% 10%, rgba(107,124,255,0.25), transparent 60%);"></div>
+      <span class="sticker cyan">RAM Arduino Uno = 2048 Б</span>
+      <p class="big-line">Екран 128×64 = <em>1024 байти</em>. Це половина пам'яті Uno.</p>
+      <div class="ram">
+        <div class="seg" role="group" aria-label="Яку бібліотеку взяти">
+          <button type="button" id="ramA" aria-pressed="false">Adafruit</button>
+          <button type="button" id="ramU" aria-pressed="true">U8x8</button>
+        </div>
+        <div class="ram-bar" aria-hidden="true">
+          <i class="used" id="ramUsed" style="width: 52.9%"></i>
+          <i class="buf" id="ramBuf" style="width: 0%; left: 52.9%"></i>
+          <span class="limit" style="left: calc(100% / 1.15)"></span>
+        </div>
+        <div class="ram-legend"><span id="ramTxt">1245 Б з 2048</span><span>межа 2048 Б</span></div>
+        <div class="ram-verdict ok" id="ramVerdict">Влазить</div>
+      </div>
+    </div>
+    <div class="rail">
+      <div class="who"><div class="ava g-anna">А</div><b>+</b></div>
+      <button class="act" type="button" aria-label="Вподобати"><svg><use href="#i-heart"/></svg><span>1024</span></button>
+      <a class="act" href="#anna-c" aria-label="Коментарі"><svg><use href="#i-comment"/></svg><span>1</span></a>
+      <div class="disc" style="--c: #6B7CFF"></div>
+    </div>
+    <div class="cap">
+      <div class="h">@anettt_ti <small>Піксель-Детектив</small></div>
+      <p>Натисни «Adafruit» і подивись, що станеться з пам'яттю. <span class="tag">#ssd1306 #ram</span></p>
+      <div class="sound"><svg><use href="#i-note"/></svg><div class="mq"><span>оригінальний звук — 128 × 64 / 8 = 1024 ·</span></div></div>
+    </div>
+  </div>
+  <aside class="comments" id="anna-c">
+    <header>Коментарі <span>1</span></header>
+    <div class="cbody">
+      <div class="c pinned">
+        <div class="ava sm g-anna">А</div>
+        <div>
+          <div class="n"><b>Анна</b> @anettt_ti<i>автор</i></div>
+          <div class="t">
+            <ul>
+              <li><b>OLED SSD1306</b>, 0.96", 128×64 пікселі. Кожен піксель світиться сам.</li>
+              <li>Бібліотека Adafruit тримає копію екрана в пам'яті, а це 1024 байти. На Uno їх не вистачить.</li>
+              <li>Тому беремо <b>U8x8</b>: вона пише літери прямо на екран, без копії.</li>
+              <li>У U8x8 немає кирилиці, тож замість слів на екрані — <b>іконки</b>: свічка, прапор, хмаринка. Кожна намальована з «#» і «.» у файлі <code>icons.h</code>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</article>
+
+<!-- ===================== ДЕНИС: I2C ===================== -->
+<article class="clip" id="i2c">
+  <div class="clip-head"><span class="clip-num">КЛІП 02</span><h2>Одна шина — дві адреси</h2></div>
+  <div class="phone">
+    <div class="prog"><i></i></div>
+    <div class="video">
+      <div class="vbg" style="background: radial-gradient(90% 60% at 10% 90%, rgba(255,201,74,0.18), transparent 60%);"></div>
+      <span class="sticker pink">SDA + SCL = 2 дроти</span>
+      <div class="bus">
+        <svg viewBox="0 0 300 250" role="img" aria-label="Arduino, годинник 0x68 і дисплей 0x3C на одній шині I2C">
+          <rect x="10" y="95" width="80" height="60" rx="8" fill="#0F6E8C"/>
+          <text x="50" y="122" text-anchor="middle" fill="#fff" font-family="JetBrains Mono" font-size="12" font-weight="700">UNO</text>
+          <text x="50" y="140" text-anchor="middle" fill="#BFE9F5" font-family="JetBrains Mono" font-size="10">A4 · A5</text>
+          <path d="M90 112 H270" stroke="#3C8DFF" stroke-width="4"/>
+          <path d="M90 138 H270" stroke="#FFC94A" stroke-width="4"/>
+          <text x="275" y="116" fill="#3C8DFF" font-family="JetBrains Mono" font-size="11" font-weight="700">SDA</text>
+          <text x="275" y="142" fill="#FFC94A" font-family="JetBrains Mono" font-size="11" font-weight="700">SCL</text>
+          <path d="M150 112 V60 M160 138 V60" stroke="#6B6B7B" stroke-width="3"/>
+          <rect x="115" y="16" width="80" height="44" rx="6" fill="#1E1E28" stroke="#FFC94A" stroke-width="2"/>
+          <text x="155" y="35" text-anchor="middle" fill="#F3F3F7" font-family="JetBrains Mono" font-size="11" font-weight="700">DS3231</text>
+          <text x="155" y="51" text-anchor="middle" fill="#FFC94A" font-family="JetBrains Mono" font-size="12" font-weight="700">0x68</text>
+          <path d="M220 112 V190 M230 138 V190" stroke="#6B6B7B" stroke-width="3"/>
+          <rect x="185" y="190" width="90" height="48" rx="6" fill="#04060A" stroke="#25F4EE" stroke-width="2"/>
+          <text x="230" y="210" text-anchor="middle" fill="#D8F3FF" font-family="JetBrains Mono" font-size="11" font-weight="700">OLED</text>
+          <text x="230" y="227" text-anchor="middle" fill="#25F4EE" font-family="JetBrains Mono" font-size="12" font-weight="700">0x3C</text>
+          <g id="pkt">
+            <rect x="-26" y="-11" width="52" height="22" rx="11" fill="#FE2C55"/>
+            <text id="pktTxt" x="0" y="4" text-anchor="middle" fill="#fff" font-family="JetBrains Mono" font-size="11" font-weight="700">0x68?</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+    <div class="rail">
+      <div class="who"><div class="ava g-den">Д</div><b>+</b></div>
+      <button class="act" type="button" aria-label="Вподобати"><svg><use href="#i-heart"/></svg><span>0x68</span></button>
+      <a class="act" href="#i2c-c" aria-label="Коментарі"><svg><use href="#i-comment"/></svg><span>1</span></a>
+      <div class="disc" style="--c: var(--amber)"></div>
+    </div>
+    <div class="cap">
+      <div class="h">@deny_19 <small>Тік-Так 0x68</small></div>
+      <p>Годинник і дисплей висять на тих самих двох дротах і не заважають один одному. <span class="tag">#i2c</span></p>
+      <div class="sound"><svg><use href="#i-note"/></svg><div class="mq"><span>оригінальний звук — START · 0x3C · ACK ·</span></div></div>
+    </div>
+  </div>
+  <aside class="comments" id="i2c-c">
+    <header>Коментарі <span>1</span></header>
+    <div class="cbody">
+      <div class="c pinned">
+        <div class="ava sm g-den">Д</div>
+        <div>
+          <div class="n"><b>Денис</b> @deny_19<i>автор</i></div>
+          <div class="t">
+            <ul>
+              <li>У кожного пристрою на шині своя <b>адреса</b>: годинник — <code>0x68</code>, дисплей — <code>0x3C</code>.</li>
+              <li>Arduino звертається за адресою, і відповідає тільки той, кого покликали.</li>
+              <li>Якщо дисплей не відповідає, у Serial Monitor з'являється помилка, а дзвінок працює далі.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</article>
+
+<!-- ===================== КНОПКИ ===================== -->
+<article class="clip" id="bounce">
+  <div class="clip-head"><span class="clip-num">КЛІП 03</span><h2>Як працює кнопка</h2></div>
+  <div class="phone">
+    <div class="prog"><i></i></div>
+    <div class="video">
+      <div class="bounce-ui">
+        <span class="sticker">натисни і тримай</span>
+        <button class="bigbtn" id="bBtn" type="button" aria-label="Тестова кнопка">ТИСНИ</button>
+        <p class="pin-level" id="bLevel">D2 = <b>HIGH</b> (відпущено)</p>
+        <canvas class="scope" id="bScope" width="700" height="300" aria-label="Осцилограма: сирий сигнал і сигнал після антибрязкоту"></canvas>
+        <div class="counter">
+          <div class="raw"><b id="bRaw">0</b><span>сирих перемикань</span></div>
+          <div class="clean"><b id="bClean">0</b><span>після фільтра</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="rail">
+      <div class="who"><div class="ava g-t">93</div><b>+</b></div>
+      <button class="act" type="button" aria-label="Вподобати"><svg><use href="#i-heart"/></svg><span>30 мс</span></button>
+      <a class="act" href="#bounce-c" aria-label="Коментарі"><svg><use href="#i-comment"/></svg><span>1</span></a>
+      <div class="disc" style="--c: var(--green)"></div>
+    </div>
+    <div class="cap">
+      <div class="h">@stem93 <small>фізика за 1 мс</small></div>
+      <p>Одне натискання — кілька «кліків». Подивись на червону лінію. <span class="tag">#кнопки</span></p>
+      <div class="sound"><svg><use href="#i-note"/></svg><div class="mq"><span>оригінальний звук — клац-клац-клац ·</span></div></div>
+    </div>
+  </div>
+  <aside class="comments" id="bounce-c">
+    <header>Коментарі <span>1</span></header>
+    <div class="cbody">
+      <div class="c pinned">
+        <div class="ava sm g-t">93</div>
+        <div>
+          <div class="n"><b>@stem93</b><i>автор</i></div>
+          <div class="t">
+            <ul>
+              <li>Кнопка з'єднує пін з GND. <b>Натиснуто = LOW</b>, відпущено = HIGH.</li>
+              <li>Контакти кілька мілісекунд «брязкають». Тому нове значення приймаємо, лише коли воно трималось <b>30 мс</b>.</li>
+              <li>«+1» спрацьовує, коли кнопку <b>відпускають</b>. Так встигаєш дотиснути другу кнопку для <b>A+B</b>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</article>
+
+<!-- ===================== СИМУЛЯТОР ===================== -->
+<article class="clip" id="sim">
+  <div class="clip-head"><span class="clip-num">КЛІП 04</span><h2>Спробуй меню сам</h2></div>
+  <div class="phone">
+    <div class="prog"><i></i></div>
+    <div class="video top">
+      <div class="device">
+        <div class="silk"><span>STEM-93 · school bell</span><span id="simClock">sim 1×</span></div>
+        <div class="oled-frame">
+          <div class="oled-pins"><span>GND</span><span>VCC</span><span>SCL</span><span>SDA</span></div>
+          <div class="oled oled2" id="simOled" aria-live="polite"></div>
+        </div>
+        <div class="hw-btns">
+          <div class="hw"><button class="a" id="hwA" type="button" aria-label="Кнопка A плюс"></button><span>A «+»<br><kbd>A</kbd></span></div>
+          <div class="hw"><button class="b" id="hwB" type="button" aria-label="Кнопка B далі"></button><span>B «→»<br><kbd>B</kbd></span></div>
+          <div class="hw"><button class="ab" id="hwAB" type="button" aria-label="Натиснути A і B разом"></button><span>A+B разом<br>для миші</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="rail">
+      <div class="who"><div class="ava g-t">93</div><b>+</b></div>
+      <button class="act" type="button" aria-label="Вподобати"><svg><use href="#i-heart"/></svg><span>A+B</span></button>
+      <a class="act" href="#sim-c" aria-label="Коментарі"><svg><use href="#i-comment"/></svg><span>log</span></a>
+      <div class="disc"></div>
+    </div>
+    <div class="cap">
+      <div class="h">@stem93 <small>як у прошивці</small></div>
+      <p>Мишею — кнопка <b>A+B</b> справа. B — години/хвилини, A — +1. Або тримай клавіші <b>A</b> і <b>B</b> разом. <span class="tag">#симулятор</span></p>
+      <div class="sound"><svg><use href="#i-note"/></svg><div class="mq"><span>оригінальний звук — onBothButtons() ·</span></div></div>
+    </div>
+  </div>
+  <aside class="comments" id="sim-c">
+    <header>Serial Monitor <span id="simMode">HOME</span></header>
+    <div class="cbody">
+      <div class="sim-ctrl" role="group" aria-label="Керування симуляцією">
+        <button class="chip" type="button" id="simBoot">⏻ Перезапуск</button>
+        <button class="chip" type="button" id="simJump">⏭ 08:59:45</button>
+        <button class="chip" type="button" id="simSpeed" aria-pressed="false">Швидкість 10×</button>
+      </div>
+      <div class="serial" id="simLog" role="log" aria-label="Вивід Serial Monitor"></div>
+      <div class="fsm" aria-label="Стани меню">
+        <svg viewBox="0 0 540 150">
+          <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6B6B7B"/></marker></defs>
+          <path class="edge" d="M110 52 H146" marker-end="url(#ah)"/>
+          <path class="edge" d="M250 52 H286" marker-end="url(#ah)"/>
+          <path class="edge" d="M390 52 H426" marker-end="url(#ah)"/>
+          <path class="edge" d="M480 75 C480 140 60 140 60 78" marker-end="url(#ah)"/>
+          <text class="elbl" x="128" y="40" text-anchor="middle">A+B</text>
+          <text class="elbl" x="268" y="40" text-anchor="middle">A+B</text>
+          <text class="elbl" x="408" y="40" text-anchor="middle">A+B</text>
+          <text class="elbl" x="270" y="128" text-anchor="middle">A+B — зберегти</text>
+          <g class="node" id="nHOME"><rect x="10" y="30" width="100" height="44" rx="10"/><text x="60" y="57" text-anchor="middle">HOME</text></g>
+          <g class="node" id="nCLK"><rect x="150" y="30" width="100" height="44" rx="10"/><text x="200" y="51" text-anchor="middle">1/3</text><text x="200" y="66" text-anchor="middle" style="font-size:10px">час → DS3231</text></g>
+          <g class="node" id="nSIL"><rect x="290" y="30" width="100" height="44" rx="10"/><text x="340" y="51" text-anchor="middle">2/3</text><text x="340" y="66" text-anchor="middle" style="font-size:10px">мовчання</text></g>
+          <g class="node" id="nQUO"><rect x="430" y="30" width="100" height="44" rx="10"/><text x="480" y="51" text-anchor="middle">3/3</text><text x="480" y="66" text-anchor="middle" style="font-size:10px">цитата</text></g>
+        </svg>
+      </div>
+    </div>
+  </aside>
+</article>
+
+<!-- ===================== СХЕМА ===================== -->
+<article class="clip" id="wiring">
+  <div class="clip-head"><span class="clip-num">КЛІП 05</span><h2>Збираємо схему</h2></div>
+  <div class="phone">
+    <div class="prog"><i></i></div>
+    <div class="video">
+      <div class="wiring">
+        <svg viewBox="0 0 300 420" role="img" aria-label="Схема: OLED на A4, A5, 5V, GND; кнопка A на D2 і GND; кнопка B на D3 і GND">
+          <rect x="70" y="150" width="160" height="120" rx="10" fill="#0F6E8C"/>
+          <text x="150" y="205" text-anchor="middle" fill="#fff" font-family="JetBrains Mono" font-size="16" font-weight="700">UNO</text>
+          <text x="150" y="224" text-anchor="middle" fill="#BFE9F5" font-family="JetBrains Mono" font-size="10">DFPlayer + DS3231</text>
+          <text x="150" y="238" text-anchor="middle" fill="#BFE9F5" font-family="JetBrains Mono" font-size="10">як в уроці 2</text>
+          <g font-family="JetBrains Mono" font-size="10" font-weight="700" fill="#fff">
+            <circle cx="100" cy="158" r="5" fill="#FFC94A"/><text x="100" y="178" text-anchor="middle">D2</text>
+            <circle cx="130" cy="158" r="5" fill="#FFC94A"/><text x="130" y="178" text-anchor="middle">D3</text>
+            <circle cx="200" cy="158" r="5" fill="#FFC94A"/><text x="200" y="178" text-anchor="middle">GND</text>
+            <circle cx="100" cy="262" r="5" fill="#FFC94A"/><text x="100" y="252" text-anchor="middle">5V</text>
+            <circle cx="140" cy="262" r="5" fill="#FFC94A"/><text x="140" y="252" text-anchor="middle">GND</text>
+            <circle cx="180" cy="262" r="5" fill="#FFC94A"/><text x="180" y="252" text-anchor="middle">A4</text>
+            <circle cx="210" cy="262" r="5" fill="#FFC94A"/><text x="210" y="252" text-anchor="middle">A5</text>
+          </g>
+          <rect x="60" y="30" width="56" height="56" rx="8" fill="#2B2F36"/><circle cx="88" cy="58" r="16" fill="#2BD47D"/>
+          <text x="88" y="22" text-anchor="middle" fill="#3BE38B" font-family="JetBrains Mono" font-size="11" font-weight="700">A «+»</text>
+          <rect x="150" y="30" width="56" height="56" rx="8" fill="#2B2F36"/><circle cx="178" cy="58" r="16" fill="#3C8DFF"/>
+          <text x="178" y="22" text-anchor="middle" fill="#3C8DFF" font-family="JetBrains Mono" font-size="11" font-weight="700">B «→»</text>
+          <path d="M70 86 V120 H100 V153" stroke="#3BE38B" stroke-width="3" fill="none"/>
+          <path d="M160 86 V120 H130 V153" stroke="#3C8DFF" stroke-width="3" fill="none"/>
+          <path d="M106 86 V105 H200 V153" stroke="#6B6B7B" stroke-width="3" fill="none"/>
+          <path d="M196 86 V105" stroke="#6B6B7B" stroke-width="3" fill="none"/>
+          <rect x="80" y="320" width="150" height="80" rx="6" fill="#12161D" stroke="#2A3240"/>
+          <rect x="92" y="340" width="126" height="50" fill="#04060A"/>
+          <text x="155" y="370" text-anchor="middle" fill="#D8F3FF" font-family="JetBrains Mono" font-size="12" font-weight="700">OLED 0x3C</text>
+          <g font-family="JetBrains Mono" font-size="8" fill="#8995A8" font-weight="700">
+            <text x="100" y="333" text-anchor="middle">VCC</text><text x="140" y="333" text-anchor="middle">GND</text><text x="180" y="333" text-anchor="middle">SDA</text><text x="210" y="333" text-anchor="middle">SCL</text>
+          </g>
+          <path d="M100 267 V322" stroke="#FE2C55" stroke-width="3"/>
+          <path d="M140 267 V322" stroke="#9C9CAC" stroke-width="3"/>
+          <path d="M180 267 V322" stroke="#3C8DFF" stroke-width="3"/>
+          <path d="M210 267 V322" stroke="#FFC94A" stroke-width="3"/>
+        </svg>
+      </div>
+    </div>
+    <div class="rail">
+      <div class="who"><div class="ava g-t">93</div><b>+</b></div>
+      <button class="act" type="button" aria-label="Вподобати"><svg><use href="#i-heart"/></svg><span>8</span></button>
+      <a class="act" href="#wiring-c" aria-label="Коментарі"><svg><use href="#i-comment"/></svg><span>1</span></a>
+      <div class="disc" style="--c: var(--amber)"></div>
+    </div>
+    <div class="cap">
+      <div class="h">@stem93 <small>8 нових дротів</small></div>
+      <p>Старі дроти не чіпаємо. 4 дроти до дисплея і по 2 до кожної кнопки. <span class="tag">#wokwi</span></p>
+      <div class="sound"><svg><use href="#i-note"/></svg><div class="mq"><span>оригінальний звук — A4 · A5 · D2 · D3 · GND ·</span></div></div>
+    </div>
+  </div>
+  <aside class="comments" id="wiring-c">
+    <header>Коментарі <span>закріплено</span></header>
+    <div class="cbody">
+      <div class="c pinned">
+        <div class="ava sm g-t">93</div>
+        <div>
+          <div class="n"><b>@stem93</b><i>автор</i></div>
+          <div class="t">
+            <div class="tbl"><table>
+              <thead><tr><th>Що</th><th>Куди (Uno)</th></tr></thead>
+              <tbody>
+                <tr><td>OLED SDA</td><td><code>A4</code></td></tr>
+                <tr><td>OLED SCL</td><td><code>A5</code></td></tr>
+                <tr><td>OLED VCC</td><td><code>5V</code> *</td></tr>
+                <tr><td>OLED GND</td><td><code>GND</code></td></tr>
+                <tr><td>Кнопка A</td><td><code>D2</code> і <code>GND</code></td></tr>
+                <tr><td>Кнопка B</td><td><code>D3</code> і <code>GND</code></td></tr>
+              </tbody>
+            </table></div>
+            <p>* Перед підключенням подивіться напис біля VCC на своєму модулі.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</article>
+
+<!-- ===================== ЧЕЛЕНДЖ ===================== -->
+<article class="clip" id="challenge">
+  <div class="clip-head"><span class="clip-num">КЛІП 06</span><h2>Твоя черга</h2></div>
+  <div class="phone">
+    <div class="prog"><i></i></div>
+    <div class="video">
+      <div class="vbg" style="background: radial-gradient(120% 70% at 50% 0%, rgba(254,44,85,0.22), transparent 60%), radial-gradient(100% 60% at 50% 100%, rgba(37,244,238,0.18), transparent 60%);"></div>
+      <h3 class="mega glitch" style="font-size: clamp(30px, 10cqw, 44px)">#ПеренесиЛінійку</h3>
+      <p class="big-line">Постав хвилину мовчання на <em>2 хвилини від зараз</em> лише кнопками і дочекайся <em>▶</em> біля свічки.</p>
+    </div>
+    <div class="rail">
+      <div class="who"><div class="ava g-eve">Е</div><b>+</b></div>
+      <button class="act" type="button" aria-label="Вподобати"><svg><use href="#i-heart"/></svg><span>you</span></button>
+      <a class="act" href="#challenge-c" aria-label="Коментарі"><svg><use href="#i-comment"/></svg><span>DoD</span></a>
+      <div class="disc" style="--c: #FF6FA0"></div>
+    </div>
+    <div class="cap">
+      <div class="h">@llinave <small>Капітан Спринту</small></div>
+      <p>Виконав — постав галочку справа. <span class="tag">#definitionofdone</span></p>
+      <div class="sound"><svg><use href="#i-note"/></svg><div class="mq"><span>оригінальний звук — In Progress → Ready for testing ·</span></div></div>
+    </div>
+  </div>
+  <aside class="comments" id="challenge-c">
+    <header>Definition of Done <span id="dodCount">0 / 4</span></header>
+    <div class="cbody">
+      <div class="todo" id="dod">
+        <label><input type="checkbox" id="dod1"><span>Дисплей показує час і розклад з іконками.</span></label>
+        <label><input type="checkbox" id="dod2"><span>A+B відкриває меню: ставлю кнопками поточний час, хвилину мовчання і цитату.</span></label>
+        <label><input type="checkbox" id="dod3"><span>У новий час трек запускається сам, біля свічки з’являється ▶.</span></label>
+        <label><input type="checkbox" id="dod4"><span>Можу пояснити: адреса I²C, брязкіт кнопки, чому U8x8.</span></label>
+      </div>
+    </div>
+  </aside>
+</article>
+
+</main>
+
+<footer class="end">
+  <p>STEM-93 · урок 3 з 6. Скетч і схема Wokwi — у папці <code>lessons/lesson-03-show-and-set/</code>.</p>
+</footer>
+
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const pad2 = n => String(n).padStart(2, '0');
+  const hms = s => pad2(Math.floor(s / 3600) % 24) + ':' + pad2(Math.floor(s / 60) % 60) + ':' + pad2(Math.floor(s) % 60);
+  const pad16 = s => (s + ' '.repeat(16)).slice(0, 16);
+  const $ = id => document.getElementById(id);
+
+  /* ---------- OLED з іконками (ті самі малюнки, що в icons.h) ---------- */
+  const ICONS = {"CLOCK":[".....######.....","...##......##...","..#....#.....#..",".#.....#......#.",".#.....#......#.","#......#.......#","#......#.......#","#......#####...#","#..............#","#..............#",".#............#.",".#............#.","..#..........#..","...##......##...",".....######.....","................"],"CANDLE":[".......#........","......##........","......###.......",".....####.......",".....#####......","......###.......",".......#........","....#######.....","....#.....#.....","....#.....#.....","....#.....#.....","....#.....#.....","....#.....#.....","....#.....#.....","..###########...","................"],"FLAG":[".#..............",".############...",".############...",".############...",".############...",".#..........#...",".#..........#...",".#..........#...",".############...",".#..............",".#..............",".#..............",".#..............",".#..............","###.............","................"],"QUOTE":["................",".##############.","#..............#","#..##.....##...#","#..###....###..#","#...##.....##..#","#...#......#...#","#..#......#....#","#..............#",".###.##########.","....##..........","....#...........","...#............","................","................","................"],"PLAY":["................","...#............","...##...........","...###..........","...####.........","...#####........","...######.......","...#######......","...#######......","...######.......","...#####........","...####.........","...###..........","...##...........","...#............","................"],"WARN":[".......##.......","......#..#......","......#..#......",".....#.##.#.....",".....#.##.#.....","....#..##..#....","....#..##..#....","...#...##...#...","...#...##...#...","..#..........#..","..#....##....#..",".#.....##.....#.",".#............#.","################","................","................"],"MUTE":["................","................",".......#........","......##........",".....#.#........","####.#.#..#...#.","#..##..#...#.#..","#......#....#...","#..##..#...#.#..","####.#.#..#...#.",".....#.#........","......##........",".......#........","................","................","................"],"CHECK":["................","................","..............#.",".............##.","............##..","...........##...","..........##....",".##......##.....","..##....##......","...##..##.......","....####........",".....##.........","................","................","................","................"],"PENCIL":["................","............##..","...........#..#.","..........#..#..",".........#..#...","........#..#....",".......#..#.....","......#..#......",".....#..#.......","....#..#........","...#..#.........","..###...........","..##............","................","................","................"],"BELL":[".......##.......","......####......",".....######.....","....########....","....########....","....########....","....########....","...##########...","...##########...","..############..",".##############.","################","................","......####......",".......##.......","................"]};
+  function iconSvg(name) {
+    if (!name || !ICONS[name]) return '<svg viewBox="0 0 16 16"></svg>';
+    let r = '';
+    ICONS[name].forEach((row, y) => { for (let x = 0; x < 16; x++) if (row[x] === '#') r += '<rect x="' + x + '" y="' + y + '" width="1" height="1"/>'; });
+    return '<svg viewBox="0 0 16 16" shape-rendering="crispEdges" fill="currentColor" aria-hidden="true">' + r + '</svg>';
+  }
+  // lines: [{icon, time: "ГГ:ХХ", mark, edit: 0|1}], hint — підказка в нижньому рядку
+  function renderOled(el, lines, hint) {
+    const f = (txt, on) => on ? '<span class="inv">' + txt + '</span>' : txt;
+    let html = lines.map(l => '<div class="ol"><span class="ic">' + iconSvg(l.icon) + '</span><span class="tm">' +
+      f(l.time.slice(0, 2), l.edit === 0) + l.time[2] + f(l.time.slice(3, 5), l.edit === 1) +
+      '</span><span class="mk">' + iconSvg(l.mark) + '</span></div>').join('');
+    if (hint) html += '<div class="ol hint"><span>' + hint + '</span></div>';
+    if (el.innerHTML !== html) el.innerHTML = html;
+  }
+
+  /* ---------- кліпи «в кадрі» + вкладки ---------- */
+  const clips = [...document.querySelectorAll('.clip')];
+  const tabs = [...document.querySelectorAll('.tabs a')];
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        e.target.classList.toggle('in', e.isIntersecting);
+        if (e.isIntersecting) {
+          const tab = tabs.find(t => t.getAttribute('href') === '#' + e.target.id);
+          if (tab) tabs.forEach(t => t.classList.toggle('on', t === tab));
+        }
+      });
+    }, { threshold: 0.35 });
+    clips.forEach(c => io.observe(c));
+    io.observe(document.getElementById('team'));
+  } else {
+    clips.forEach(c => c.classList.add('in'));
+  }
+
+  /* ---------- «Стежити» ---------- */
+  document.querySelectorAll('.prof .follow').forEach(b => b.addEventListener('click', () => {
+    const on = b.getAttribute('aria-pressed') !== 'true';
+    b.setAttribute('aria-pressed', on);
+    b.textContent = on ? 'Ти стежиш ✓' : 'Стежити';
+  }));
+
+  /* ---------- діскотека ---------- */
+  $('partyBtn').addEventListener('click', e => {
+    const on = $('team').classList.toggle('party');
+    e.currentTarget.setAttribute('aria-pressed', on);
+  });
+
+  /* ---------- вподобайки ---------- */
+  document.querySelectorAll('button.act').forEach(b => b.addEventListener('click', () => b.classList.toggle('liked')));
+
+  /* ---------- інтро: справжній годинник ---------- */
+  function tickHero() {
+    const d = new Date();
+    renderOled($('heroOled'), [
+      { icon: 'CLOCK', time: pad2(d.getHours()) + (d.getSeconds() % 2 ? ' ' : ':') + pad2(d.getMinutes()) },
+      { icon: 'CANDLE', time: '09:00' },
+      { icon: 'FLAG', time: '09:01' },
+      { icon: 'QUOTE', time: '12:10' },
+    ]);
+  }
+  tickHero(); setInterval(tickHero, 1000);
+
+  /* ---------- RAM ---------- */
+  const RAM = 2048, USED = 1245, BUF = 1024, SCALE = 2048 * 1.15;
+  function setRam(adafruit) {
+    $('ramA').setAttribute('aria-pressed', adafruit); $('ramU').setAttribute('aria-pressed', !adafruit);
+    const u = USED / SCALE * 100;
+    $('ramUsed').style.width = u + '%';
+    $('ramBuf').style.left = u + '%';
+    $('ramBuf').style.width = adafruit ? (BUF / SCALE * 100) + '%' : '0%';
+    $('ramTxt').textContent = adafruit ? '≈ ' + (USED + BUF) + ' Б з ' + RAM : USED + ' Б з ' + RAM;
+    $('ramVerdict').textContent = adafruit ? 'Не влазить!' : 'Влазить';
+    $('ramVerdict').className = 'ram-verdict ' + (adafruit ? 'bad' : 'ok');
+  }
+  $('ramA').addEventListener('click', () => setRam(true));
+  $('ramU').addEventListener('click', () => setRam(false));
+  setRam(false);
+
+  /* ---------- I2C: пакет бігає між пристроями ---------- */
+  const pkt = $('pkt'), pktTxt = $('pktTxt');
+  const routes = [
+    { label: '0x68?', pts: [[90, 112], [150, 112], [150, 66]], fill: '#FFC94A', text: '#1A1300' },
+    { label: '0x3C!', pts: [[90, 112], [220, 112], [220, 184]], fill: '#25F4EE', text: '#04211F' },
+  ];
+  let route = 0, rt0 = performance.now();
+  function lerpPath(pts, t) {
+    const seg = []; let total = 0;
+    for (let i = 1; i < pts.length; i++) { const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); seg.push(d); total += d; }
+    let dist = t * total;
+    for (let i = 0; i < seg.length; i++) {
+      if (dist <= seg[i]) { const k = dist / seg[i]; return [pts[i][0] + (pts[i + 1][0] - pts[i][0]) * k, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * k]; }
+      dist -= seg[i];
+    }
+    return pts[pts.length - 1];
+  }
+  function stepPkt(now) {
+    const r = routes[route];
+    let t = (now - rt0) / 1800;
+    if (t >= 1.35) { route = (route + 1) % routes.length; rt0 = now; t = 0; }
+    const [x, y] = lerpPath(r.pts, Math.min(1, t));
+    pkt.setAttribute('transform', 'translate(' + x + ' ' + y + ')');
+    pkt.querySelector('rect').setAttribute('fill', r.fill);
+    pktTxt.setAttribute('fill', r.text);
+    pktTxt.textContent = r.label;
+    requestAnimationFrame(stepPkt);
+  }
+  if (!reduce) requestAnimationFrame(stepPkt);
+  else pkt.setAttribute('transform', 'translate(150 112)');
+
+  /* ---------- брязкіт ---------- */
+  const bBtn = $('bBtn'), bScope = $('bScope'), sctx = bScope.getContext('2d');
+  let rawCount = 0, cleanCount = 0, lastTrace = null;
+  // 60 мс сигналу (крок 0,1 мс): кілька «стрибків», потім стабільний рівень. true = HIGH.
+  function makeTrace(toLow) {
+    const n = 600, start = toLow;
+    const bounces = 2 + Math.floor(Math.random() * 5);
+    const edges = []; let t = 3;
+    for (let i = 0; i < bounces * 2 + 1; i++) { t += 0.15 + Math.random() * (0.4 + i * 0.18); edges.push(t); }
+    const pts = []; let level = start, ei = 0;
+    for (let i = 0; i < n; i++) {
+      while (ei < edges.length && i / 10 >= edges[ei]) { level = !level; ei++; }
+      pts.push(level);
+    }
+    const clean = []; let stable = start, cand = start, since = 0;
+    for (let i = 0; i < n; i++) {
+      if (pts[i] !== cand) { cand = pts[i]; since = i; }
+      if (cand !== stable && i - since >= 300) stable = cand;
+      clean.push(stable);
+    }
+    return { pts, clean, raw: edges.length };
+  }
+  function drawScope() {
+    const W = bScope.width, H = bScope.height;
+    sctx.fillStyle = '#FFFFFF'; sctx.fillRect(0, 0, W, H);
+    sctx.strokeStyle = 'rgba(22,22,29,0.08)'; sctx.lineWidth = 1;
+    for (let x = 0; x <= 6; x++) { const X = 40 + x * (W - 60) / 6; sctx.beginPath(); sctx.moveTo(X, 10); sctx.lineTo(X, H - 30); sctx.stroke(); }
+    sctx.fillStyle = '#6B6B7B'; sctx.font = '600 18px JetBrains Mono, monospace';
+    for (let x = 0; x <= 6; x++) { const X = 40 + x * (W - 60) / 6; sctx.fillText((x * 10) + '', X - 8, H - 8); }
+    sctx.fillText('мс', W - 34, H - 8);
+    sctx.fillStyle = '#FE2C55'; sctx.fillText('сирий', 4, 30);
+    sctx.fillStyle = '#12884B'; sctx.fillText('чистий', 4, 160);
+    if (!lastTrace) { sctx.fillStyle = '#6B6B7B'; sctx.fillText('натисни кнопку — тут з’явиться сигнал', 120, 130); return; }
+    const plot = (arr, top, color) => {
+      sctx.strokeStyle = color; sctx.lineWidth = 3; sctx.beginPath();
+      arr.forEach((lv, i) => {
+        const X = 40 + i / arr.length * (W - 60), Y = lv ? top : top + 60;
+        if (i === 0) sctx.moveTo(X, Y); else { sctx.lineTo(X, arr[i - 1] ? top : top + 60); sctx.lineTo(X, Y); }
+      });
+      sctx.stroke();
+    };
+    plot(lastTrace.pts, 40, '#FE2C55');
+    plot(lastTrace.clean, 170, '#12884B');
+  }
+  function bounceEdge(down) {
+    bBtn.classList.toggle('down', down);
+    $('bLevel').innerHTML = down ? 'D2 = <b>LOW</b> (натиснуто)' : 'D2 = <b>HIGH</b> (відпущено)';
+    lastTrace = makeTrace(down);
+    rawCount += lastTrace.raw; cleanCount += 1;
+    $('bRaw').textContent = rawCount; $('bClean').textContent = cleanCount;
+    drawScope();
+  }
+  let bDown = false;
+  bBtn.addEventListener('pointerdown', e => { e.preventDefault(); if (!bDown) { bDown = true; bBtn.setPointerCapture?.(e.pointerId); bounceEdge(true); } });
+  const bUp = () => { if (bDown) { bDown = false; bounceEdge(false); } };
+  bBtn.addEventListener('pointerup', bUp);
+  bBtn.addEventListener('pointercancel', bUp);
+  bBtn.addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && !bDown && !e.repeat) { e.preventDefault(); bDown = true; bounceEdge(true); } });
+  bBtn.addEventListener('keyup', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); bUp(); } });
+  drawScope();
+
+  /* ---------- симулятор (порт логіки зі скетчу) ---------- */
+  const logEl = $('simLog');
+  function log(text, cls) {
+    const d = document.createElement('div');
+    d.textContent = text; if (cls) d.className = cls;
+    logEl.appendChild(d);
+    while (logEl.childElementCount > 120) logEl.firstChild.remove();
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+  const EV = [
+    { h: 9, m: 0, track: 2, name: 'SILENCE', ua: 'хвилина мовчання', fired: false },
+    { h: 9, m: 1, track: 1, name: 'ANTHEM', ua: 'гімн України', fired: false },
+    { h: 12, m: 10, track: 3, name: 'QUOTE', ua: 'цитата дня', fired: false },
+  ];
+  const TRACK_LEN = { 1: 75, 2: 60, 3: 20 };
+  const S = {
+    t: 8 * 3600 + 59 * 60 + 40, speed: 1, lastSec: -1,
+    player: 'READY', cur: 0, startReal: 0, endSim: 0, pending: -1,
+    mode: 'HOME', eh: 0, em: 0, editMin: false, lastUi: 0, notice: '', noticeAt: 0,
+  };
+  const evStr = i => (i + 1) + ') ' + pad2(EV[i].h) + ':' + pad2(EV[i].m) + ' → трек ' + EV[i].track + ' (' + EV[i].ua + ')';
+  const notice = txt => { S.notice = txt; S.noticeAt = performance.now(); };
+
+  function startTrack(tr) { log('Команда: відтворити трек ' + tr); S.player = 'STARTING'; S.cur = tr; S.startReal = performance.now(); }
+  function setEventTime(i, h, m) {
+    if (EV[i].h === h && EV[i].m === m) return;
+    EV[i].h = h; EV[i].m = m; EV[i].fired = false;
+    log('Збережено: ' + evStr(i), 'p');
+  }
+  function setSilence(h, m) {
+    setEventTime(0, h, m);
+    const a = (h * 60 + m + 1) % 1440;
+    setEventTime(1, Math.floor(a / 60), a % 60);
+  }
+  function printEdit() { log('  меню: ' + pad2(S.eh) + ':' + pad2(S.em) + (S.editMin ? ' (змінюємо хвилини)' : ' (змінюємо години)')); }
+  function enterMenu(mode) {
+    S.mode = mode;
+    if (mode === 'CLK') {
+      S.eh = Math.floor(S.t / 3600) % 24; S.em = Math.floor(S.t / 60) % 60;
+      log('Меню 1/3: поточний час', 'p');
+    } else {
+      const e = EV[mode === 'SIL' ? 0 : 2];
+      S.eh = e.h; S.em = e.m;
+      log(mode === 'SIL' ? 'Меню 2/3: час хвилини мовчання' : 'Меню 3/3: час цитати дня', 'p');
+    }
+    S.editMin = false; S.changed = false;
+    printEdit();
+  }
+  function onBoth() {
+    S.lastUi = performance.now();
+    if (S.mode === 'HOME') enterMenu('CLK');
+    else if (S.mode === 'CLK') {
+      // як saveClockTime(): записуємо в «DS3231», лише якщо щось міняли; секунди = 00
+      if (S.changed) {
+        S.t = S.eh * 3600 + S.em * 60; S.lastSec = -1;
+        EV.forEach(e => e.fired = false);
+        log('Годинник встановлено: 2026-10-16 ' + pad2(S.eh) + ':' + pad2(S.em) + ':00', 'p');
+      } else log('Час не змінено.');
+      enterMenu('SIL');
+    }
+    else if (S.mode === 'SIL') { setSilence(S.eh, S.em); enterMenu('QUO'); }
+    else { setEventTime(2, S.eh, S.em); log('Меню закрито, розклад збережено в EEPROM.', 'p'); S.mode = 'HOME'; notice('CHECK'); }
+  }
+  function onPlus() {
+    if (S.mode === 'HOME') return;
+    S.lastUi = performance.now();
+    S.changed = true;
+    if (S.editMin) S.em = (S.em + 1) % 60; else S.eh = (S.eh + 1) % 24;
+    printEdit();
+  }
+  function onNext() {
+    if (S.mode === 'HOME') return;
+    S.lastUi = performance.now();
+    S.editMin = !S.editMin;
+    printEdit();
+  }
+
+  // Кнопки: та сама логіка «жесту», що й у readButtons().
+  const btn = { A: false, B: false };
+  let g = { active: false, a: false, b: false, both: false, rep: false }, aDownAt = 0, lastRep = 0;
+  function evalButtons() {
+    if (btn.A || btn.B) {
+      if (!g.active) g = { active: true, a: false, b: false, both: false, rep: false };
+      if (btn.A) g.a = true;
+      if (btn.B) g.b = true;
+      if (btn.A && btn.B && !g.both) { g.both = true; onBoth(); }
+      return;
+    }
+    if (g.active) {
+      g.active = false;
+      if (g.both || g.rep) return;
+      if (g.a) onPlus(); else if (g.b) onNext();
+    }
+  }
+  function press(k, down) {
+    if (btn[k] === down) return;
+    btn[k] = down;
+    if (k === 'A' && down) aDownAt = performance.now();
+    $(k === 'A' ? 'hwA' : 'hwB').classList.toggle('down', down);
+    evalButtons();
+    render();
+  }
+  // Мишею дві кнопки одночасно не затиснеш: «A+B» натискає обидві і тримає, поки тримаєш її.
+  const ab = $('hwAB');
+  const abDown = down => { ab.classList.toggle('down', down); press('A', down); press('B', down); };
+  ab.addEventListener('pointerdown', e => { e.preventDefault(); ab.setPointerCapture?.(e.pointerId); abDown(true); });
+  ab.addEventListener('pointerup', () => abDown(false));
+  ab.addEventListener('pointercancel', () => abDown(false));
+  ab.addEventListener('lostpointercapture', () => abDown(false));
+  ab.addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); abDown(true); } });
+  ab.addEventListener('keyup', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); abDown(false); } });
+
+  ['A', 'B'].forEach(k => {
+    const el = $(k === 'A' ? 'hwA' : 'hwB');
+    el.addEventListener('pointerdown', e => { e.preventDefault(); el.setPointerCapture?.(e.pointerId); press(k, true); });
+    el.addEventListener('pointerup', () => press(k, false));
+    el.addEventListener('pointercancel', () => press(k, false));
+    el.addEventListener('lostpointercapture', () => press(k, false));
+    el.addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); press(k, true); } });
+    el.addEventListener('keyup', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); press(k, false); } });
+  });
+  // Клавіші: латиниця a/b і та сама позиція в українській розкладці (ф/и).
+  const keyMap = { a: 'A', 'ф': 'A', b: 'B', 'и': 'B' };
+  const simEl = $('sim');
+  const simVisible = () => { const r = simEl.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; };
+  addEventListener('keydown', e => {
+    const k = keyMap[e.key?.toLowerCase()];
+    if (!k || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (/input|textarea/i.test(e.target.tagName) || !simVisible()) return;
+    e.preventDefault(); press(k, true);
+  });
+  addEventListener('keyup', e => { const k = keyMap[e.key?.toLowerCase()]; if (k) press(k, false); });
+  addEventListener('blur', () => { press('A', false); press('B', false); });
+
+  const EV_ICON = ['CANDLE', 'FLAG', 'QUOTE'];
+  const hm = (h, m) => pad2(h) + ':' + pad2(m);
+  // Заставка, поки пристрій стартує (як showLogo() у скетчі).
+  let bootUntil = performance.now() + 2500;
+  const LOGO = '<div class="logo"><span class="b1">' + iconSvg('BELL') + '</span><span class="stem">STEM</span>' +
+    '<span class="b2">' + iconSvg('BELL') + '</span><span class="line"></span><span class="num">93</span>' +
+    '<span class="sb">SCHOOL  BELL</span></div>';
+  function render() {
+    const el = $('simOled');
+    if (performance.now() < bootUntil) {
+      if (el.innerHTML !== LOGO) el.innerHTML = LOGO;
+    } else if (S.mode === 'HOME') {
+      const sec = Math.floor(S.t);
+      const clock = pad2(Math.floor(sec / 3600)) + (sec % 2 ? ' ' : ':') + pad2(Math.floor(sec / 60) % 60);
+      renderOled(el, [{ icon: 'CLOCK', time: clock, mark: S.notice }].concat(EV.map((e, i) => ({
+        icon: EV_ICON[i], time: hm(e.h, e.m), mark: S.player === 'PLAYING' && S.cur === e.track ? 'PLAY' : '',
+      }))));
+    } else {
+      const sil = S.mode === 'SIL', clk = S.mode === 'CLK';
+      const a = (S.eh * 60 + S.em + 1) % 1440;
+      renderOled(el, [
+        { icon: 'PENCIL', time: clk ? ' 1/3 ' : sil ? ' 2/3 ' : ' 3/3 ' },
+        { icon: clk ? 'CLOCK' : sil ? 'CANDLE' : 'QUOTE', time: hm(S.eh, S.em), edit: S.editMin ? 1 : 0 },
+        sil ? { icon: 'FLAG', time: hm(Math.floor(a / 60), a % 60) } : { icon: '', time: '     ' },
+      ], 'A:+  B:<>  AB:OK');
+    }
+    $('simMode').textContent = { HOME: 'HOME', CLK: 'MENU 1/3', SIL: 'MENU 2/3', QUO: 'MENU 3/3' }[S.mode];
+    $('nCLK').classList.toggle('on', S.mode === 'CLK');
+    $('nHOME').classList.toggle('on', S.mode === 'HOME');
+    $('nSIL').classList.toggle('on', S.mode === 'SIL');
+    $('nQUO').classList.toggle('on', S.mode === 'QUO');
+    $('simClock').textContent = 'sim ' + S.speed + '×';
+  }
+
+  let prev = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.25, (now - prev) / 1000); prev = now;
+    S.t += dt * S.speed;
+    if (S.t >= 86400) { S.t -= 86400; EV.forEach(e => e.fired = false); }
+    if (btn.A && !g.b && S.mode !== 'HOME' && now - aDownAt >= 600 && now - lastRep >= 150) { lastRep = now; g.rep = true; onPlus(); }
+    if (S.player === 'STARTING' && now - S.startReal >= 250) {
+      S.player = 'PLAYING'; S.endSim = S.t + TRACK_LEN[S.cur];
+      log('ГРАЄ: відтворення підтверджено (BUSY = LOW).', 'p');
+    }
+    if (S.player === 'PLAYING' && S.t >= S.endSim) { S.player = 'READY'; log('ГОТОВО: трек більше не грає.'); }
+    if (S.player === 'READY' && S.pending >= 0) { const i = S.pending; S.pending = -1; log('З черги: подія ' + evStr(i)); startTrack(EV[i].track); }
+    const sec = Math.floor(S.t);
+    if (sec !== S.lastSec) {
+      S.lastSec = sec;
+      const h = Math.floor(sec / 3600), m = Math.floor(sec / 60) % 60;
+      EV.forEach((e, i) => {
+        if (e.h !== h || e.m !== m || e.fired) return;
+        e.fired = true;
+        log('⏰ НАСТАВ ЧАС ПОДІЇ ' + evStr(i), 'w');
+        if (S.player === 'READY') startTrack(e.track);
+        else if (S.pending < 0) { S.pending = i; log('Плеєр зайнятий — подія чекає, поки завершиться поточний трек.'); }
+        else log('ПРОПУЩЕНО: плеєр зайнятий, у черзі вже є подія.', 'e');
+      });
+    }
+    if (S.notice && now - S.noticeAt >= 4000) S.notice = '';
+    if (S.mode !== 'HOME' && now - S.lastUi >= 30000) { log('Меню закрито без збереження (30 с без натискань).', 'w'); S.mode = 'HOME'; }
+    render();
+    requestAnimationFrame(frame);
+  }
+  function boot() {
+    bootUntil = performance.now() + 2500;
+    S.mode = 'HOME'; S.player = 'READY'; S.pending = -1; S.notice = '';
+    log('Урок 3: Uno + DFPlayer + DS3231 + OLED + 2 кнопки');
+    log('Дисплей: OLED відповідає на 0x3C.');
+    log('Запуск DFPlayer...');
+  }
+  $('simBoot').addEventListener('click', boot);
+  $('simJump').addEventListener('click', () => { S.t = 8 * 3600 + 59 * 60 + 45; EV.forEach(e => e.fired = false); log('Годинник встановлено: 2026-10-16 08:59:45', 'p'); });
+  $('simSpeed').addEventListener('click', e => { S.speed = S.speed === 1 ? 10 : 1; e.currentTarget.setAttribute('aria-pressed', S.speed === 10); });
+
+  log('Урок 3: Uno + DFPlayer + DS3231 + OLED + 2 кнопки');
+  log('Розклад (EEPROM):');
+  EV.forEach((e, i) => log('  ' + evStr(i)));
+  render();
+  requestAnimationFrame(frame);
+
+  /* ---------- Definition of Done ---------- */
+  const boxes = [...document.querySelectorAll('#dod input')];
+  const KEY = 'stem93-l3-dod-v2';
+  try { const saved = JSON.parse(localStorage.getItem(KEY) || '[]'); boxes.forEach((b, i) => { b.checked = !!saved[i]; }); } catch (e) {}
+  function dodUpdate() {
+    $('dodCount').textContent = boxes.filter(b => b.checked).length + ' / ' + boxes.length;
+    try { localStorage.setItem(KEY, JSON.stringify(boxes.map(b => b.checked))); } catch (e) {}
+  }
+  boxes.forEach(b => b.addEventListener('change', dodUpdate));
+  dodUpdate();
+})();
+</script>

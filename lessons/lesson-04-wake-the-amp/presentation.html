@@ -1,0 +1,1409 @@
+      <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Урок 4 · Два береги</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yeseva+One&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Макет: прогулянка містом на двох берегах (назву не пишемо — хай учні здогадаються).
+   Згори вниз. Кожна зупинка маршруту — розділ уроку.
+   Палітра — ізнікська кераміка: кобальт і бірюза на білій плитці, томатно-червоний лише для небезпеки.
+   Сторінка свідомо світла (так просив викладач); темні лише вода на мапі й екран OLED. */
+:root {
+  --bg: #F3F6FA;
+  --tile: #FFFFFF;
+  --tile-2: #E8EEF6;
+  --line: #D5DEEA;
+  --ink: #12203A;
+  --muted: #56657F;
+  --cobalt: #1D4FA6;
+  --cobalt-soft: #DCE6F7;
+  --turq: #138F8F;
+  --turq-soft: #D6F0EE;
+  --tomato: #C8371F;
+  --tomato-soft: #FBE3DD;
+  --saffron: #E39B26;
+  --saffron-soft: #FCEFD6;
+  --water: #2C6FB8;
+  --water-2: #5B98D6;
+  --oled-bg: #05080E;
+  --oled-px: #DDF2FF;
+  --display: 'Yeseva One', Georgia, 'Times New Roman', serif;
+  --body: 'Golos Text', 'Segoe UI', Arial, sans-serif;
+  --mono: 'JetBrains Mono', Consolas, 'Courier New', monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg); color: var(--ink);
+  font: 400 17px/1.55 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 72px;
+  overflow-x: hidden;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--tile); }
+h1, h2, h3 { margin: 0; text-wrap: balance; font-weight: 400; }
+p { margin: 0; }
+a { color: var(--cobalt); }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--saffron); outline-offset: 3px; }
+code, .mono { font-family: var(--mono); font-size: .92em; }
+.wrap { max-width: 1120px; margin: 0 auto; }
+
+/* ---------- верхня панель ---------- */
+.topbar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))) calc(-1 * max(16px, env(safe-area-inset-right, 0px)));
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px));
+  background: color-mix(in srgb, var(--tile) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.topbar .wrap { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.brand { font-family: var(--display); font-size: 20px; color: var(--cobalt); white-space: nowrap; }
+.brand small { font-family: var(--body); font-size: 13px; color: var(--muted); margin-left: 6px; }
+.route { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+.route a {
+  display: inline-flex; align-items: center; gap: 6px;
+  text-decoration: none; color: var(--ink); font-size: 13px; font-weight: 600;
+  padding: 5px 10px; border-radius: 99px; background: var(--tile-2);
+}
+.route a b { font-family: var(--mono); color: var(--cobalt); font-size: 12px; }
+.route a:hover { background: var(--cobalt-soft); }
+
+/* ---------- плитка-орнамент ---------- */
+.iznik {
+  background-color: var(--cobalt-soft);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%231D4FA6' stroke-width='1.6' opacity='.55'%3E%3Cpath d='M32 6 C40 18 40 26 32 32 C24 26 24 18 32 6Z'/%3E%3Cpath d='M32 58 C24 46 24 38 32 32 C40 38 40 46 32 58Z'/%3E%3Cpath d='M6 32 C18 24 26 24 32 32 C26 40 18 40 6 32Z'/%3E%3Cpath d='M58 32 C46 40 38 40 32 32 C38 24 46 24 58 32Z'/%3E%3C/g%3E%3Ccircle cx='32' cy='32' r='3' fill='%23C8371F' opacity='.7'/%3E%3Cg fill='%23138F8F' opacity='.45'%3E%3Ccircle cx='0' cy='0' r='5'/%3E%3Ccircle cx='64' cy='0' r='5'/%3E%3Ccircle cx='0' cy='64' r='5'/%3E%3Ccircle cx='64' cy='64' r='5'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* ---------- герой ---------- */
+.hero { padding-block: 28px 8px; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 28px; align-items: center; }
+.eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--turq); }
+.hero h1 { font-family: var(--display); font-size: clamp(40px, 6.4vw, 74px); line-height: 1.02; color: var(--cobalt); margin-top: 8px; }
+.hero h1 em { font-style: normal; color: var(--tomato); }
+.hero .lead { margin-top: 16px; font-size: 19px; max-width: 34em; }
+.mission {
+  margin-top: 20px; padding: 14px 16px; border-radius: 14px;
+  background: var(--tile); border: 1px solid var(--line);
+  display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start;
+}
+.mission .ic { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: var(--saffron-soft); font-size: 22px; }
+.mission b { display: block; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.city { border-radius: 22px; overflow: hidden; border: 1px solid var(--line); background: #FDF6EC; }
+.city svg { display: block; width: 100%; height: auto; }
+.ferry { animation: sail 22s linear infinite; }
+@keyframes sail { from { transform: translateX(-140px); } to { transform: translateX(760px); } }
+.gull { animation: glide 9s ease-in-out infinite alternate; }
+.gull.g2 { animation-duration: 12s; animation-delay: -4s; }
+@keyframes glide { from { transform: translate(0, 0); } to { transform: translate(60px, -14px); } }
+.wave { animation: drift 6s ease-in-out infinite alternate; }
+@keyframes drift { from { transform: translateX(-12px); } to { transform: translateX(12px); } }
+.bolt-blink { animation: blink 2.6s steps(2, jump-none) infinite; }
+@keyframes blink { 0%, 60% { opacity: 1; } 61%, 100% { opacity: .25; } }
+
+/* ---------- розділи ---------- */
+section.stop { padding-block: 56px 8px; scroll-margin-top: 70px; }
+.stop-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: end; margin-bottom: 22px; }
+.stop-no {
+  width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center;
+  font-family: var(--display); font-size: 30px; color: var(--tile); background: var(--cobalt);
+  box-shadow: inset 0 0 0 4px var(--cobalt), inset 0 0 0 6px rgba(255,255,255,.55);
+}
+.stop-no.red { background: var(--tomato); box-shadow: inset 0 0 0 4px var(--tomato), inset 0 0 0 6px rgba(255,255,255,.55); }
+.stop-no.turq { background: var(--turq); box-shadow: inset 0 0 0 4px var(--turq), inset 0 0 0 6px rgba(255,255,255,.55); }
+.stop-no.saff { background: var(--saffron); box-shadow: inset 0 0 0 4px var(--saffron), inset 0 0 0 6px rgba(255,255,255,.55); }
+.place { font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.stop h2 { font-family: var(--display); font-size: clamp(30px, 4.2vw, 46px); line-height: 1.08; color: var(--ink); }
+.sub { margin-top: 6px; color: var(--muted); max-width: 46em; }
+.panel { background: var(--tile); border: 1px solid var(--line); border-radius: 18px; padding: 20px; min-width: 0; }
+
+/* ---------- команда ---------- */
+.team { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 16px; }
+.prof { background: var(--tile); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+.prof .top { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 14px; padding: 16px 16px 12px; align-items: center; background: var(--c-soft); }
+.prof .face { width: 104px; height: 104px; border-radius: 50%; background: var(--tile); border: 3px solid var(--c); overflow: hidden; }
+.prof .face svg { width: 100%; height: 100%; display: block; }
+.prof .nick { font-family: var(--display); font-size: 25px; line-height: 1.1; color: var(--c-ink); }
+.prof .who { margin-top: 4px; font-size: 14px; color: var(--muted); }
+.prof .who b { color: var(--ink); font-weight: 600; }
+.prof .body { padding: 14px 16px 16px; display: grid; gap: 10px; flex: 1; align-content: start; }
+.prof .task { font-size: 15.5px; }
+.prof .task::before { content: "Завдання: "; font-weight: 700; color: var(--c-ink); }
+.prof .ask { font-size: 14.5px; color: var(--muted); border-left: 3px solid var(--c); padding-left: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips span { font-size: 12.5px; font-weight: 600; padding: 3px 9px; border-radius: 99px; background: var(--tile-2); color: var(--ink); }
+.prof .done {
+  margin-top: 4px; justify-self: start; border: 1.5px solid var(--c); background: var(--tile);
+  border-radius: 99px; padding: 6px 14px; font-size: 14px; font-weight: 600; color: var(--c-ink);
+}
+.prof .done[aria-pressed="true"] { background: var(--c); color: var(--tile); }
+.p-anna { --c: #1D4FA6; --c-soft: #DCE6F7; --c-ink: #1D4FA6; }
+.p-den  { --c: #C8371F; --c-soft: #FBE3DD; --c-ink: #A82B16; }
+.p-dar  { --c: #B0367A; --c-soft: #F8E0EE; --c-ink: #8E2662; }
+.p-ole  { --c: #138F8F; --c-soft: #D6F0EE; --c-ink: #0D7272; }
+.p-eve  { --c: #B87414; --c-soft: #FCEFD6; --c-ink: #8E5A0C; }
+.dance .head { animation: bob 1.2s ease-in-out infinite; transform-origin: 50px 70px; }
+@keyframes bob { 0%,100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+
+/* ---------- безпека ---------- */
+.safety-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.seg button {
+  border: 1.5px solid var(--line); background: var(--tile); border-radius: 12px; padding: 8px 12px;
+  font-size: 15px; font-weight: 600; text-align: left; line-height: 1.2;
+}
+.seg button small { display: block; font-weight: 400; color: var(--muted); font-size: 12.5px; }
+.seg button[aria-pressed="true"] { border-color: var(--cobalt); background: var(--cobalt-soft); }
+.seg.v button[aria-pressed="true"][data-danger] { border-color: var(--tomato); background: var(--tomato-soft); }
+.lbl { font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: 16px; }
+.lbl:first-child { margin-top: 0; }
+.formula { margin-top: 18px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; font-family: var(--mono); font-size: 18px; }
+.formula .big { font-family: var(--display); font-size: clamp(44px, 7vw, 64px); line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; }
+.formula .big.hot { color: var(--tomato); }
+.meter { margin-top: 16px; position: relative; padding-top: 30px; }
+.meter .bar { display: grid; grid-template-columns: 1fr 1fr .48fr .22fr 1.3fr; height: 18px; border-radius: 9px; overflow: hidden; }
+.meter .bar i:nth-child(1) { background: #CFE8D8; }
+.meter .bar i:nth-child(2) { background: #F3E3A6; }
+.meter .bar i:nth-child(3) { background: #F2B97C; }
+.meter .bar i:nth-child(4) { background: #E9845F; }
+.meter .bar i:nth-child(5) { background: var(--tomato); }
+.meter .ticks { position: relative; height: 22px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.meter .ticks span { position: absolute; top: 4px; transform: translateX(-50%); }
+.meter .pin {
+  position: absolute; top: 0; transform: translateX(-50%); transition: left .5s cubic-bezier(.3,1.4,.5,1);
+  display: grid; justify-items: center; font-weight: 700; font-size: 13px;
+}
+.meter .pin::after { content: ""; width: 3px; height: 26px; background: var(--ink); border-radius: 2px; margin-top: 2px; }
+.verdict { margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: var(--tile-2); font-weight: 600; }
+.verdict.hot { background: var(--tomato-soft); color: #8E2010; }
+.note { margin-top: 10px; font-size: 13.5px; color: var(--muted); }
+.rules { display: grid; gap: 10px; }
+.rule { display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 12px; align-items: start; padding: 12px; border-radius: 14px; background: var(--tile); border: 1px solid var(--line); }
+.rule .ic { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 21px; background: var(--tomato-soft); }
+.rule b { display: block; }
+.rule p { font-size: 14.5px; color: var(--muted); }
+.nazar { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 14px; align-items: center; margin-top: 16px; padding: 14px 16px; border-radius: 16px; background: var(--cobalt-soft); }
+.nazar svg { width: 70px; height: 70px; }
+
+/* ---------- реле ---------- */
+.relay-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.relay-stage { padding: 0; overflow: hidden; }
+.relay-stage svg { display: block; width: 100%; height: auto; }
+.relay-ctl { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 14px 16px; border-top: 1px solid var(--line); }
+.bigbtn {
+  border: 0; border-radius: 14px; padding: 12px 18px; font-weight: 700; font-size: 16px;
+  background: var(--cobalt); color: var(--tile); display: inline-flex; gap: 8px; align-items: center;
+}
+.bigbtn[aria-pressed="true"] { background: var(--tomato); }
+.ghost { border: 1.5px solid var(--line); background: var(--tile); border-radius: 14px; padding: 10px 14px; font-weight: 600; font-size: 15px; }
+.pinread { font-family: var(--mono); font-size: 15px; padding: 6px 10px; border-radius: 10px; background: var(--tile-2); }
+.lever { transition: transform .18s cubic-bezier(.5, 1.8, .5, 1); transform-origin: 320px 190px; transform: rotate(8deg); }
+.on .lever { transform: rotate(-8deg); }
+.coil-glow { opacity: 0; transition: opacity .2s; }
+.on .coil-glow { opacity: 1; }
+.field { opacity: 0; transition: opacity .3s; }
+.on .field { opacity: .9; }
+.lamp { fill: #E6E2D8; transition: fill .2s; }
+.on .lamp { fill: #FFC233; }
+.lamp-rays { opacity: 0; transition: opacity .2s; }
+.on .lamp-rays { opacity: 1; }
+.wire-on { stroke: #A9B4C4; transition: stroke .2s; }
+.on .wire-on { stroke: var(--saffron); }
+.wire-nc { stroke: #A9B4C4; }
+.led-mod { fill: #5A2A2A; transition: fill .2s; }
+.on .led-mod { fill: #FF3B2F; }
+.steps { display: grid; gap: 8px; counter-reset: s; padding: 0; margin: 0; list-style: none; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: start; font-size: 15.5px; }
+.steps li::before {
+  content: counter(s); width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  font-weight: 700; font-size: 14px; background: var(--tile-2); color: var(--cobalt);
+}
+.steps li.lit::before { background: var(--saffron); color: var(--tile); }
+.legend { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+.legend div { padding: 10px; border-radius: 12px; background: var(--tile-2); text-align: center; }
+.legend b { display: block; font-family: var(--mono); font-size: 18px; color: var(--cobalt); }
+.legend span { font-size: 13px; color: var(--muted); }
+.story { margin-top: 14px; padding: 14px 16px; border-radius: 14px; background: var(--saffron-soft); font-size: 15px; }
+.story b { color: #7A4B05; }
+
+/* ---------- розклад / симулятор ---------- */
+.sim { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px; align-items: start; }
+.board { background: #0F2547; color: #F6E7B4; border-radius: 18px; padding: 16px; border: 4px solid #C9A04A; min-width: 0; }
+.board h3 { font-family: var(--display); font-size: 22px; color: #F6E7B4; }
+.board .row { display: grid; grid-template-columns: 76px 30px minmax(0, 1fr); gap: 8px; padding: 9px 0; border-top: 1px dashed rgba(246, 231, 180, .3); font-family: var(--mono); font-size: 15px; align-items: center; }
+.board .row:first-of-type { border-top: 0; }
+.board .row.now { color: #FFFFFF; }
+.board .row.now .t { background: #C9A04A; color: #0F2547; border-radius: 6px; padding: 0 4px; }
+.board .row .what { font-family: var(--body); font-size: 15px; }
+.device { display: grid; gap: 14px; }
+.oled-box { background: #1C2433; border-radius: 16px; padding: 14px; display: grid; justify-items: center; }
+.oled-box canvas { width: 100%; max-width: 384px; aspect-ratio: 2 / 1; height: auto; image-rendering: pixelated; background: var(--oled-bg); border-radius: 4px; box-shadow: 0 0 0 6px #0A0E15; }
+.sim-ctl { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.sim-ctl input[type=range] { flex: 1 1 200px; accent-color: var(--cobalt); }
+.clock { font-family: var(--mono); font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.track { position: relative; height: 54px; border-radius: 12px; background: var(--tile-2); overflow: hidden; }
+.track .seg-r { position: absolute; top: 6px; height: 18px; border-radius: 6px; background: var(--saffron); }
+.track .seg-p { position: absolute; top: 30px; height: 18px; border-radius: 6px; }
+.track .seg-p.s { background: var(--cobalt); }
+.track .seg-p.a { background: var(--turq); }
+.track .cur { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink); }
+.track-legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--muted); margin-top: 6px; }
+.track-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.status { display: flex; flex-wrap: wrap; gap: 8px; }
+.status span { font-size: 14px; font-weight: 600; padding: 6px 12px; border-radius: 99px; background: var(--tile-2); }
+.status span.on { background: var(--saffron); color: var(--ink); }
+.status span.play { background: var(--cobalt); color: var(--tile); }
+.log { font-family: var(--mono); font-size: 13.5px; background: var(--tile-2); border-radius: 12px; padding: 10px 12px; min-height: 140px; max-height: 190px; overflow: auto; }
+.log div { white-space: pre-wrap; }
+.log .r { color: #8E5A0C; font-weight: 700; }
+
+/* ---------- базар: схема і код ---------- */
+.bazaar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+.tablewrap { overflow-x: auto; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+td code { background: var(--tile-2); padding: 1px 6px; border-radius: 6px; }
+pre.code { margin: 0; font-family: var(--mono); font-size: 13.5px; line-height: 1.55; background: #0F2547; color: #E8EEF8; border-radius: 14px; padding: 14px 16px; overflow-x: auto; }
+pre.code .c { color: #8FB3E6; }
+pre.code .k { color: #F6C76E; }
+.schematic { margin-top: 14px; display: block; border-radius: 12px; border: 1px solid var(--line); overflow: hidden; background: #F5F4EF; }
+.schematic img { display: block; width: 100%; height: auto; }
+.cmds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.cmds div { padding: 10px 12px; border-radius: 12px; background: var(--tile-2); }
+.cmds code { font-weight: 700; color: var(--cobalt); }
+.cmds span { display: block; font-size: 13.5px; color: var(--muted); }
+
+/* ---------- чай: DoD ---------- */
+.dod { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 10px; }
+.dod label { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: start; padding: 12px 14px; border-radius: 14px; background: var(--tile); border: 1px solid var(--line); cursor: pointer; font-size: 15.5px; }
+.dod input { width: 22px; height: 22px; accent-color: var(--turq); margin: 1px 0 0; }
+.dod label:has(input:checked) { background: var(--turq-soft); border-color: var(--turq); }
+.tea { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 16px; align-items: center; margin-top: 18px; }
+.tea svg { width: 90px; height: auto; }
+.steam { animation: steam 2.4s ease-in-out infinite; }
+.steam.s2 { animation-delay: -1.2s; }
+@keyframes steam { 0% { transform: translateY(4px); opacity: 0; } 40% { opacity: .8; } 100% { transform: translateY(-10px); opacity: 0; } }
+footer { margin-top: 56px; padding-top: 18px; padding-left: 96px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); }
+
+/* ---------- намальована схема ---------- */
+.wiring { margin-top: 14px; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.wiring svg { display: block; width: 100%; height: auto; }
+.wiring .relay-ctl { border-top: 1px solid var(--line); }
+.wiring .w { cursor: pointer; }
+.wiring .w path { transition: stroke-width .15s, filter .15s; }
+.wiring .w:hover path { stroke-width: 8; }
+.wiring .w.flash path { animation: wflash .9s ease-in-out; }
+@keyframes wflash { 0%,100% { filter: none; } 50% { filter: drop-shadow(0 0 6px #FFC233) brightness(1.3); } }
+.wiring .w-sig { transition: stroke .2s; }
+.wiring.on .w-sig { stroke: #B57BFF; filter: drop-shadow(0 0 4px #B57BFF); }
+.wiring .w-relled { transition: fill .2s; }
+.wiring.on .w-relled { fill: #FF3B2F; }
+.wiring .w-load { stroke-dasharray: 8 10; }
+.wiring.on .w-load { animation: flow .6s linear infinite; }
+@keyframes flow { to { stroke-dashoffset: -18; } }
+.wiring .w-amp { transition: fill .2s; }
+.wiring.on .w-amp { fill: #FFB020; }
+.wiring .w-ampglow { transition: opacity .2s; }
+.wiring.on .w-ampglow { opacity: .55; }
+
+/* ---------- міські дрібнички, на які можна клацати ---------- */
+.stop-head { grid-template-columns: auto minmax(0, 1fr) auto; }
+.land { border: 0; background: none; padding: 0; width: 132px; cursor: pointer; border-radius: 16px; transition: transform .15s; }
+.land:hover { transform: translateY(-3px) rotate(-2deg); }
+.land:active { transform: scale(.94); }
+.land svg { display: block; width: 100%; height: auto; overflow: visible; }
+.land .hint { display: block; font-size: 11.5px; font-weight: 600; color: var(--muted); text-align: center; margin-top: 2px; }
+/* Галата */
+.galata .win rect { transition: fill .3s; }
+.galata.lit .win rect { fill: #FFC233; }
+.galata .flag { transition: transform .5s cubic-bezier(.3,1.6,.5,1); transform: translateY(18px); }
+.galata.lit .flag { transform: translateY(0); }
+/* назар */
+.nz .pupil { transform-origin: 60px 50px; }
+.nz.look .pupil { animation: look 1.4s ease-in-out; }
+@keyframes look { 0%,100% { transform: translate(0,0); } 20% { transform: translate(-9px,-3px); } 45% { transform: translate(9px,-3px); } 70% { transform: translate(0,7px); } }
+.nz .lid { transform-origin: 60px 12px; transform: scaleY(0); }
+.nz.look .lid { animation: blinkLid 1.4s ease-in-out; }
+@keyframes blinkLid { 0%,80%,100% { transform: scaleY(0); } 88% { transform: scaleY(1); } }
+/* міст */
+.br .car { transform: translateX(0); }
+.br.go .car { animation: drive 1.8s ease-in-out; }
+@keyframes drive { 0% { transform: translateX(0); } 100% { transform: translateX(104px); } }
+.br .cable { transition: stroke .4s; }
+.br.go .cable { animation: rainbow 1.8s linear; }
+@keyframes rainbow { 0% { stroke: #C8371F; } 33% { stroke: #E39B26; } 66% { stroke: #138F8F; } 100% { stroke: #1D4FA6; } }
+/* пором */
+.fr .boat { animation: bob 2.6s ease-in-out infinite; transform-origin: 60px 70px; }
+.fr .puff { opacity: 0; }
+.fr.honk .puff { animation: puff 1.4s ease-out; }
+.fr.honk .puff.p2 { animation-delay: .2s; }
+.fr.honk .puff.p3 { animation-delay: .4s; }
+@keyframes puff { 0% { opacity: .9; transform: translate(0,0) scale(.5); } 100% { opacity: 0; transform: translate(14px,-26px) scale(1.8); } }
+/* ліхтарі базару */
+.lt .lamp-g { transform-box: fill-box; transform-origin: 50% 0; }
+.lt.swing .lamp-g { animation: swing 1.6s ease-in-out; }
+.lt.swing .lamp-g.l2 { animation-delay: .12s; }
+.lt.swing .lamp-g.l3 { animation-delay: .24s; }
+@keyframes swing { 0%,100% { transform: rotate(0); } 20% { transform: rotate(16deg); } 45% { transform: rotate(-12deg); } 70% { transform: rotate(6deg); } }
+.lt .glow { transition: fill .3s; }
+/* чай */
+.tg .liquid { transition: transform .9s cubic-bezier(.3,1.2,.5,1); transform-origin: 60px 92px; transform: scaleY(.35); }
+.tg.full .liquid { transform: scaleY(1); }
+.tg .sugar { opacity: 0; }
+.tg.full .sugar { animation: plop .9s ease-in; }
+@keyframes plop { 0% { opacity: 1; transform: translateY(-40px); } 80% { opacity: 1; transform: translateY(26px); } 100% { opacity: 0; transform: translateY(30px); } }
+/* герой: чайки, пором, блискавка */
+.city .gull, .city .ferry, .city .bolt-blink { cursor: pointer; }
+.city .gull.flyoff { animation: flyoff 2.2s ease-in-out; }
+@keyframes flyoff { 0% { transform: translate(0,0); } 45% { transform: translate(260px,-120px) scale(.6); } 55% { transform: translate(-200px,-80px) scale(.6); } 100% { transform: translate(0,0); } }
+.city.zap svg { animation: zap .6s steps(2, jump-none) 2; }
+@keyframes zap { 0% { filter: brightness(1.5) saturate(1.4); } 100% { filter: none; } }
+.city .smoke { opacity: 0; }
+.city .ferry.honk .smoke { animation: puff 1.4s ease-out; }
+/* тюльпанна стрічка між розділами */
+.tulips { display: flex; justify-content: center; gap: clamp(6px, 2vw, 22px); padding-top: 44px; flex-wrap: wrap; }
+.tulip { border: 0; background: none; padding: 0; width: 34px; cursor: pointer; }
+.tulip svg { display: block; width: 100%; height: auto; overflow: visible; }
+.tulip .head-t { transform-box: fill-box; transform-origin: 50% 100%; transition: transform .35s cubic-bezier(.3,1.8,.5,1); }
+.tulip:hover .head-t { transform: rotate(-8deg); }
+.tulip.bloom .head-t { transform: scale(1.35) rotate(8deg); }
+/* кіт-провідник */
+.cat {
+  position: fixed; z-index: 6; border: 0; background: none; padding: 0; cursor: pointer; width: 86px;
+  left: max(10px, env(safe-area-inset-left, 0px)); bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+}
+.cat svg { display: block; width: 100%; height: auto; overflow: visible; }
+.cat .tail { transform-origin: 18px 62px; animation: wag 1.6s ease-in-out infinite; }
+@keyframes wag { 0%,100% { transform: rotate(-10deg); } 50% { transform: rotate(14deg); } }
+.cat .eyes { transform-origin: 56px 34px; animation: catblink 5s infinite; }
+@keyframes catblink { 0%,92%,100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+.cat.jump svg { animation: catjump .6s cubic-bezier(.3,1.6,.5,1); }
+@keyframes catjump { 0%,100% { transform: translateY(0); } 40% { transform: translateY(-34px) rotate(-6deg); } }
+.cat.spin svg { animation: catspin 1s ease-in-out; }
+@keyframes catspin { 0% { transform: rotate(0); } 50% { transform: translateY(-40px) rotate(180deg); } 100% { transform: rotate(360deg); } }
+/* бульбашки, пелюстки, конфеті */
+.bubble {
+  position: absolute; z-index: 20; max-width: 250px; padding: 9px 13px; border-radius: 14px;
+  background: var(--ink); color: var(--tile); font-size: 14px; font-weight: 600; line-height: 1.35;
+  pointer-events: none; animation: bubIn .25s cubic-bezier(.3,1.6,.5,1);
+  box-shadow: 0 8px 22px rgba(18, 32, 58, .25);
+}
+.bubble small { display: block; font-weight: 400; opacity: .8; }
+@keyframes bubIn { from { transform: scale(.6) translateY(8px); opacity: 0; } }
+.petal { position: absolute; z-index: 19; pointer-events: none; font-size: 18px; animation: petal 1.1s ease-out forwards; }
+@keyframes petal { to { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0; } }
+.confetti { position: fixed; top: -40px; z-index: 30; pointer-events: none; font-size: 26px; animation: fall linear forwards; }
+@keyframes fall { to { transform: translateY(calc(100vh + 80px)) rotate(540deg); } }
+.mute { border: 1.5px solid var(--line); background: var(--tile); border-radius: 99px; padding: 4px 10px; font-size: 13px; font-weight: 600; }
+@keyframes bob { 0%,100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(3px) rotate(1.5deg); } }
+
+@media (max-width: 860px) {
+  .hero-grid, .safety-grid, .relay-grid, .sim, .bazaar { grid-template-columns: minmax(0, 1fr); }
+  .route { margin-left: 0; }
+}
+@media (max-width: 520px) {
+  .stop-no { width: 52px; height: 52px; font-size: 24px; border-radius: 14px; }
+  .prof .top { grid-template-columns: 84px minmax(0, 1fr); }
+  .prof .face { width: 84px; height: 84px; }
+  .cmds { grid-template-columns: minmax(0, 1fr); }
+  .stop-head { grid-template-columns: auto minmax(0, 1fr); }
+  .land { grid-column: 1 / -1; justify-self: end; width: 96px; margin-top: -8px; }
+  .cat { width: 64px; }
+  .board .row { grid-template-columns: 66px 26px minmax(0, 1fr); font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand">STEM-93 <small>Урок 4 · Місто на двох берегах</small></div>
+    <nav class="route" aria-label="Маршрут уроку">
+      <a href="#team"><b>1</b> Галата</a>
+      <a href="#safety"><b>2</b> Назар</a>
+      <a href="#relay"><b>3</b> Босфор</a>
+      <a href="#pier"><b>4</b> Пристань</a>
+      <a href="#bazaar"><b>5</b> Базар</a>
+      <a href="#tea"><b>6</b> Чай</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- ================= ГЕРОЙ ================= -->
+  <section class="hero">
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow">Урок 4 · Smart School Bell</div>
+        <h1>Розбуди <em>підсилювач</em></h1>
+        <p class="lead">Є місто, що стоїть на двох континентах: Європа і Азія. Здогадаєтесь, яке? Між ними Босфор, а дроту через нього немає. Реле влаштоване так само: на одному березі безпечні 5&nbsp;В Arduino, на іншому — 220&nbsp;В підсилювача.</p>
+        <div class="mission">
+          <div class="ic" aria-hidden="true">⚡</div>
+          <div><b>Місія</b>За хвилину до події Arduino сам вмикає підсилювач через реле, тримає його, поки грає трек, і вимикає, коли все стихло.</div>
+        </div>
+      </div>
+      <div class="city" aria-label="Місто на двох берегах: вежа, протока, міст і пором">
+        <svg viewBox="0 0 640 380" role="img">
+          <defs>
+            <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CFE2F7"/><stop offset="1" stop-color="#FCEBD6"/></linearGradient>
+            <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5B98D6"/><stop offset="1" stop-color="#2C6FB8"/></linearGradient>
+          </defs>
+          <rect width="640" height="380" fill="url(#sky)"/>
+          <circle cx="520" cy="78" r="34" fill="#F7C873" opacity=".85"/>
+          <!-- чайки -->
+          <g class="gull" fill="none" stroke="#2A3B55" stroke-width="2.2" stroke-linecap="round"><path d="M120 70 q8 -8 16 0 q8 -8 16 0"/></g>
+          <g class="gull g2" fill="none" stroke="#2A3B55" stroke-width="2" stroke-linecap="round"><path d="M260 48 q6 -6 12 0 q6 -6 12 0"/></g>
+          <!-- європейський берег -->
+          <path d="M0 250 L0 200 L40 200 L40 186 L80 186 L80 196 L120 196 L120 178 L170 178 L170 200 L240 200 L250 250 Z" fill="#B9C6D8"/>
+          <!-- Галатська вежа -->
+          <g>
+            <rect x="96" y="120" width="38" height="80" fill="#E7D9C2" stroke="#2A3B55" stroke-width="2"/>
+            <rect x="92" y="112" width="46" height="10" fill="#D7C6AB" stroke="#2A3B55" stroke-width="2"/>
+            <path d="M94 112 L115 58 L136 112 Z" fill="#3E5F8C" stroke="#2A3B55" stroke-width="2"/>
+            <line x1="115" y1="58" x2="115" y2="46" stroke="#2A3B55" stroke-width="2"/>
+            <g fill="#2A3B55"><rect x="102" y="130" width="6" height="12" rx="3"/><rect x="112" y="130" width="6" height="12" rx="3"/><rect x="122" y="130" width="6" height="12" rx="3"/><rect x="104" y="160" width="6" height="10" rx="3"/><rect x="120" y="160" width="6" height="10" rx="3"/></g>
+          </g>
+          <!-- куполи -->
+          <g fill="#C9D3E2" stroke="#2A3B55" stroke-width="2">
+            <path d="M160 200 a26 26 0 0 1 52 0 Z"/>
+            <path d="M200 200 a14 14 0 0 1 28 0 Z"/>
+            <rect x="176" y="150" width="4" height="50"/>
+          </g>
+          <!-- азійський берег -->
+          <path d="M640 250 L640 196 L600 196 L600 182 L560 182 L560 204 L520 204 L520 190 L470 190 L470 208 L410 208 L400 250 Z" fill="#AFC0D6"/>
+          <g fill="#2A3B55" opacity=".7"><rect x="478" y="198" width="6" height="6"/><rect x="530" y="196" width="6" height="6"/><rect x="568" y="190" width="6" height="6"/><rect x="610" y="204" width="6" height="6"/></g>
+          <!-- підписи берегів -->
+          <g font-family="Golos Text, Arial" font-size="15" font-weight="700" fill="#12203A">
+            <text x="18" y="236">Європа · 5 В</text>
+            <text x="482" y="236">Азія · 220 В</text>
+          </g>
+          <!-- міст -->
+          <g stroke="#C8371F" stroke-width="3" fill="none">
+            <line x1="250" y1="160" x2="250" y2="254"/>
+            <line x1="400" y1="160" x2="400" y2="254"/>
+            <path d="M190 218 Q250 158 250 160 Q325 236 400 160 Q400 158 460 218"/>
+          </g>
+          <line x1="180" y1="236" x2="470" y2="236" stroke="#2A3B55" stroke-width="5"/>
+          <!-- блискавка над мостом: реле -->
+          <path class="bolt-blink" d="M322 120 l-14 30 h12 l-8 26 l24 -34 h-12 l10 -22 z" fill="#E39B26" stroke="#2A3B55" stroke-width="2" stroke-linejoin="round"/>
+          <!-- вода -->
+          <rect x="0" y="250" width="640" height="130" fill="url(#sea)"/>
+          <g class="wave" fill="none" stroke="#CFE2F7" stroke-width="2" stroke-linecap="round" opacity=".7">
+            <path d="M30 290 q15 -8 30 0 t30 0"/><path d="M220 320 q15 -8 30 0 t30 0"/><path d="M430 300 q15 -8 30 0 t30 0"/><path d="M540 344 q15 -8 30 0 t30 0"/><path d="M110 352 q15 -8 30 0 t30 0"/>
+          </g>
+          <!-- пором -->
+          <g class="ferry">
+            <path d="M0 300 h110 l-14 22 h-84 z" fill="#FFFFFF" stroke="#2A3B55" stroke-width="2.5"/>
+            <rect x="20" y="282" width="70" height="18" fill="#FFFFFF" stroke="#2A3B55" stroke-width="2.5"/>
+            <g fill="#2C6FB8"><rect x="28" y="287" width="9" height="8"/><rect x="42" y="287" width="9" height="8"/><rect x="56" y="287" width="9" height="8"/><rect x="70" y="287" width="9" height="8"/></g>
+            <rect x="48" y="266" width="12" height="16" fill="#C8371F" stroke="#2A3B55" stroke-width="2.5"/>
+            <text x="14" y="317" font-family="JetBrains Mono, monospace" font-size="10" font-weight="700" fill="#1D4FA6">RELAY 09:00</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 1. КОМАНДА ================= -->
+  <section class="stop" id="team">
+    <div class="stop-head">
+      <div class="stop-no">1</div>
+      <div>
+        <div class="place">Галатська вежа · огляд згори</div>
+        <h2>Команда і домашні завдання</h2>
+        <p class="sub">Спершу виступи. Кожен розповідає те, що обіцяв минулого разу. Ніки придумані для уроку: пишатись, а не ображатись.</p>
+      </div>
+    </div>
+    <div class="team">
+      <!-- Олекса -->
+      <article class="prof p-ole">
+        <div class="top">
+          <div class="face"><svg viewBox="0 0 100 100" aria-hidden="true"><g class="head">
+            <path d="M16 102 C18 80 33 71 50 71 C67 71 82 80 84 102 Z" fill="#138F8F"/>
+            <rect x="44" y="60" width="12" height="13" rx="4" fill="#D9A07A"/>
+            <circle cx="50" cy="45" r="20" fill="#D9A07A"/>
+            <path d="M30 42 C30 26 40 23 50 23 C62 23 70 28 70 42 C66 34 58 31 50 31 C42 31 34 34 30 42 Z" fill="#3B2A20"/>
+            <circle cx="43" cy="47" r="2.3" fill="#1A1A22"/><circle cx="57" cy="47" r="2.3" fill="#1A1A22"/>
+            <path d="M44 55 Q50 60.5 56 55" stroke="#1A1A22" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <circle cx="70" cy="84" r="9" fill="#FFFFFF" stroke="#16161D" stroke-width="2.4"/><path d="M76.5 90.5 L84 98" stroke="#16161D" stroke-width="3" stroke-linecap="round"/>
+            <ellipse cx="70" cy="84" rx="3" ry="4" fill="#C8371F"/><path d="M66 81 l-2 -2 M74 81 l2 -2 M66 87 l-2 2 M74 87 l2 2" stroke="#16161D" stroke-width="1.2"/>
+          </g></svg></div>
+          <div><div class="nick">Баг-Базар</div><div class="who"><b>Олекса</b> · @olemsa1147 · QA</div></div>
+        </div>
+        <div class="body">
+          <p class="task">ти обіцяв завести баги. Спробуй створити декілька, щоб нам було з чим працювати.</p>
+          <p class="ask">Ідея на сьогодні: реле не вимкнулось після гімну? Клацає між мовчанням і гімном? Кожна така знахідка — картка в Trello.</p>
+          <div class="chips"><span>🐞 баг-репорт</span><span>кроки відтворення</span><span>очікувано / фактично</span></div>
+          <button class="done" type="button" aria-pressed="false">Виступ ✓</button>
+        </div>
+      </article>
+      <!-- Денис -->
+      <article class="prof p-den">
+        <div class="top">
+          <div class="face"><svg viewBox="0 0 100 100" aria-hidden="true"><g class="head">
+            <path d="M16 102 C18 80 33 71 50 71 C67 71 82 80 84 102 Z" fill="#C8371F"/>
+            <rect x="44" y="60" width="12" height="13" rx="4" fill="#E9B48F"/>
+            <circle cx="50" cy="45" r="20" fill="#E9B48F"/>
+            <path d="M29 42 L32 25 L38 32 L43 20 L50 30 L56 19 L61 31 L67 23 L71 42 C64 33 36 33 29 42 Z" fill="#2E2A26"/>
+            <circle cx="43" cy="47" r="2.3" fill="#1A1A22"/><circle cx="57" cy="47" r="2.3" fill="#1A1A22"/>
+            <path d="M44 55 Q50 60.5 56 55" stroke="#1A1A22" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <path d="M62 98 V84 a8 8 0 0 1 16 0 V98" fill="none" stroke="#C8371F" stroke-width="6"/>
+            <path d="M62 98 v-4 M78 98 v-4" stroke="#D5DEEA" stroke-width="6"/>
+            <path d="M84 72 l-4 7 h3 l-2 6 l6 -8 h-3 l2 -5 z" fill="#E39B26" stroke="#16161D" stroke-width="1"/>
+          </g></svg></div>
+          <div><div class="nick">Магніт Босфору</div><div class="who"><b>Денис</b> · @deny_19 · залізо</div></div>
+        </div>
+        <div class="body">
+          <p class="task">наступного разу дуже хочу почути від тебе, як працює реле. Розберися та спробуй пояснити нам своїми словами (для тих, хто був відсутній). Бажано з якоюсь історією.</p>
+          <p class="ask">Підказка: звідки слово «реле» і хто такий Джозеф Генрі (див. зупинку 3). Покажи клацання на живому модулі.</p>
+          <div class="chips"><span>котушка</span><span>COM · NO · NC</span><span>діод</span></div>
+          <button class="done" type="button" aria-pressed="false">Виступ ✓</button>
+        </div>
+      </article>
+      <!-- Евеліна -->
+      <article class="prof p-eve">
+        <div class="top">
+          <div class="face"><svg viewBox="0 0 100 100" aria-hidden="true"><g class="head">
+            <path d="M29 44 C27 26 73 26 71 44 L74 76 C68 81 61 79 59 72 L41 72 C39 79 32 81 26 76 Z" fill="#B5652E"/>
+            <path d="M16 102 C18 80 33 71 50 71 C67 71 82 80 84 102 Z" fill="#B87414"/>
+            <rect x="44" y="60" width="12" height="13" rx="4" fill="#F0C4A0"/>
+            <circle cx="50" cy="45" r="20" fill="#F0C4A0"/>
+            <path d="M29 52 C25 34 33 30 36 34 L36 46 Z M71 52 C75 34 67 30 64 34 L64 46 Z M30 40 C30 26 70 26 70 40 C62 32 38 32 30 40 Z" fill="#B5652E"/>
+            <path d="M40.5 44.5 L38 42.5 M59.5 44.5 L62 42.5" stroke="#1A1A22" stroke-width="1.6" stroke-linecap="round"/><circle cx="43" cy="47" r="2.3" fill="#1A1A22"/><circle cx="57" cy="47" r="2.3" fill="#1A1A22"/>
+            <path d="M44 55 Q50 60.5 56 55" stroke="#1A1A22" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <path d="M62 82 h18 l-3 14 h-12 z" fill="#FFFFFF" stroke="#16161D" stroke-width="2"/><path d="M80 85 q6 2 0 7" fill="none" stroke="#16161D" stroke-width="2"/>
+            <path d="M66 82 l3 -3 l3 3 l3 -3 l3 3" fill="none" stroke="#1D4FA6" stroke-width="1.6"/>
+            <path class="steam" d="M70 76 q-3 -4 0 -8" stroke="#56657F" stroke-width="1.5" fill="none"/>
+          </g></svg></div>
+          <div><div class="nick">Кахве-Спринт</div><div class="who"><b>Евеліна</b> · @llinave · процеси</div></div>
+        </div>
+        <div class="body">
+          <p class="task">ми так і не почули про Scrum та Agile! Підготуй, будь ласка, коротку розповідь про Scrum, Kanban і Waterfall. Чим вони відрізняються та навіщо потрібні?</p>
+          <p class="ask">Хто з них схожий на наш курс: уроки-спринти, дошка Trello, план на весь семестр?</p>
+          <div class="chips"><span>Scrum</span><span>Kanban</span><span>Waterfall</span></div>
+          <button class="done" type="button" aria-pressed="false">Виступ ✓</button>
+        </div>
+      </article>
+      <!-- Дарина -->
+      <article class="prof p-dar">
+        <div class="top">
+          <div class="face"><svg viewBox="0 0 100 100" aria-hidden="true"><g class="head">
+            <path d="M27 46 C25 23 75 23 73 46 C78 56 71 63 77 73 C70 81 62 79 59 72 L41 72 C38 79 30 81 23 73 C29 63 22 56 27 46 Z" fill="#7A3E2E"/>
+            <path d="M16 102 C18 80 33 71 50 71 C67 71 82 80 84 102 Z" fill="#B0367A"/>
+            <rect x="44" y="60" width="12" height="13" rx="4" fill="#F5D3B8"/>
+            <circle cx="50" cy="45" r="20" fill="#F5D3B8"/>
+            <path d="M28 50 C24 26 40 18 51 18 C66 18 76 28 72 50 C70 40 62 30 50 30 C38 30 31 40 28 50 Z" fill="#7A3E2E"/>
+            <path d="M40.5 44.5 L38 42.5 M59.5 44.5 L62 42.5" stroke="#1A1A22" stroke-width="1.6" stroke-linecap="round"/><circle cx="43" cy="47" r="2.3" fill="#1A1A22"/><circle cx="57" cy="47" r="2.3" fill="#1A1A22"/>
+            <path d="M44 55 Q50 60.5 56 55" stroke="#1A1A22" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <path d="M27 46 C27 18 73 18 73 46" stroke="#16161D" stroke-width="5" fill="none"/><rect x="22" y="40" width="9" height="15" rx="4" fill="#B0367A"/><rect x="69" y="40" width="9" height="15" rx="4" fill="#B0367A"/>
+            <path d="M72 98 V84" stroke="#2E8B57" stroke-width="2.5"/><path d="M72 92 q-7 -2 -8 -8 q6 1 8 6" fill="#2E8B57"/>
+            <path d="M65 78 q0 -9 7 -10 q7 1 7 10 q-3 5 -7 5 q-4 0 -7 -5 z" fill="#C8371F" stroke="#16161D" stroke-width="1.5"/><path d="M72 69 v12" stroke="#16161D" stroke-width="1"/>
+          </g></svg></div>
+          <div><div class="nick">DJ Лале</div><div class="who"><b>Дарина</b> · @darsilzx08 · звук і стиль</div></div>
+        </div>
+        <div class="body">
+          <p class="task">чекаємо на твої ідеї для нашого логотипа! І спробуй підготувати всі цитати дня у MP3-форматі.</p>
+          <p class="ask">«Лале» — тюльпан, символ цього міста. А який символ у STEM-93? І не забудь фото для статті про урок.</p>
+          <div class="chips"><span>логотип</span><span>цитати MP3</span><span>фоторепортаж</span></div>
+          <button class="done" type="button" aria-pressed="false">Виступ ✓</button>
+        </div>
+      </article>
+      <!-- Анна -->
+      <article class="prof p-anna">
+        <div class="top">
+          <div class="face"><svg viewBox="0 0 100 100" aria-hidden="true"><g class="head">
+            <path d="M28 46 C26 23 74 23 72 46 L75 77 C68 81 60 79 58 72 L42 72 C40 79 32 81 25 77 Z" fill="#5B3A29"/>
+            <path d="M16 102 C18 80 33 71 50 71 C67 71 82 80 84 102 Z" fill="#1D4FA6"/>
+            <rect x="44" y="60" width="12" height="13" rx="4" fill="#F2C9A8"/>
+            <circle cx="50" cy="45" r="20" fill="#F2C9A8"/>
+            <path d="M29 46 C27 25 41 19 51 19 C64 19 74 28 71 47 C68 37 60 31 50 31 C40 31 33 37 29 46 Z" fill="#5B3A29"/>
+            <path d="M40.5 44.5 L38 42.5 M59.5 44.5 L62 42.5" stroke="#1A1A22" stroke-width="1.6" stroke-linecap="round"/><circle cx="43" cy="47" r="2.3" fill="#1A1A22"/><circle cx="57" cy="47" r="2.3" fill="#1A1A22"/>
+            <path d="M44 55 Q50 60.5 56 55" stroke="#1A1A22" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <circle cx="72" cy="86" r="11" fill="none" stroke="#C98A3E" stroke-width="7"/>
+            <g fill="#FFF3D6"><circle cx="66" cy="80" r="1.3"/><circle cx="72" cy="76.5" r="1.3"/><circle cx="78" cy="80" r="1.3"/><circle cx="81.5" cy="86" r="1.3"/><circle cx="78" cy="92" r="1.3"/><circle cx="72" cy="95.5" r="1.3"/><circle cx="66" cy="92" r="1.3"/><circle cx="62.5" cy="86" r="1.3"/></g>
+          </g></svg></div>
+          <div><div class="nick">Байт-Сіміт</div><div class="who"><b>Анна</b> · @anettt_ti · код</div></div>
+        </div>
+        <div class="body">
+          <p class="task">згадай, що таке змінні, які бувають типи даних в Arduino та чому важливо економити пам'ять. Наступного разу поясни нам на простих прикладах!</p>
+          <p class="ask">Сіміт має 8 кунжутинок, як байт — 8 бітів. У новому скетчі <code>bool ampOn</code>, <code>unsigned long ampOnAt</code>, <code>const long AMP_LEAD_SEC</code>: скільки байтів кожна?</p>
+          <div class="chips"><span>bool · byte · int · long</span><span>RAM 2 КБ</span><span>F("…")</span></div>
+          <button class="done" type="button" aria-pressed="false">Виступ ✓</button>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ================= 2. БЕЗПЕКА ================= -->
+  <section class="stop" id="safety">
+    <div class="stop-head">
+      <div class="stop-no red">2</div>
+      <div>
+        <div class="place">Назар-бонджук · оберіг від лиха</div>
+        <h2>Струм не прощає помилок</h2>
+        <p class="sub">Небезпечна не сама напруга, а струм, що йде крізь тіло. Його рахує закон Ома: струм = напруга / опір. Оберіть напругу і руки — і подивіться, що вийде.</p>
+      </div>
+    </div>
+    <div class="safety-grid">
+      <div class="panel">
+        <div class="lbl">Напруга</div>
+        <div class="seg v" id="voltSeg">
+          <button type="button" data-v="5" aria-pressed="true">5 В<small>USB, Arduino</small></button>
+          <button type="button" data-v="12" aria-pressed="false">12 В<small>акумулятор</small></button>
+          <button type="button" data-v="42" aria-pressed="false">42 В<small>межа безпечного</small></button>
+          <button type="button" data-v="220" data-danger aria-pressed="false">220 В<small>розетка, підсилювач</small></button>
+        </div>
+        <div class="lbl">Руки</div>
+        <div class="seg" id="skinSeg">
+          <button type="button" data-r="100000" aria-pressed="false">Сухі<small>≈ 100 кОм</small></button>
+          <button type="button" data-r="10000" aria-pressed="true">Вологі<small>≈ 10 кОм</small></button>
+          <button type="button" data-r="1000" aria-pressed="false">Мокрі<small>≈ 1 кОм</small></button>
+        </div>
+        <div class="formula" aria-live="polite">
+          <span id="fText">5 В / 10 кОм =</span>
+          <span class="big" id="fBig">0,5 мА</span>
+        </div>
+        <div class="meter" aria-hidden="true">
+          <div class="pin" id="mPin" style="left: 10%">ти тут</div>
+          <div class="bar"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="ticks"><span style="left:0%">0,1</span><span style="left:25%">1</span><span style="left:50%">10</span><span style="left:62%">30</span><span style="left:67.5%">50</span><span style="left:75%">100</span><span style="left:100%">1000 мА</span></div>
+        </div>
+        <div class="verdict" id="verdict">Нічого не відчуєш.</div>
+        <p class="note">Числа приблизні, для змінного струму 50 Гц. Опір тіла залежить від шкіри, площі дотику і шляху струму. На уроці ми працюємо лише з 5 В.</p>
+      </div>
+      <div>
+        <div class="rules">
+          <div class="rule"><div class="ic" aria-hidden="true">🙅</div><div><b>220 В — лише дорослий електрик</b><p>Учні не торкаються мережі. Підсилювач до реле підключає і перевіряє фахівець.</p></div></div>
+          <div class="rule"><div class="ic" aria-hidden="true">💡</div><div><b>На уроці реле вмикає світлодіод</b><p>Від 5 В Arduino. Так само клацає, так само видно результат.</p></div></div>
+          <div class="rule"><div class="ic" aria-hidden="true">🔌</div><div><b>Змінюємо дроти без живлення</b><p>Спершу витягли USB, потім переставили дріт.</p></div></div>
+          <div class="rule"><div class="ic" aria-hidden="true">📦</div><div><b>Клеми реле — під напругою</b><p>Гвинти і пайка знизу модуля можуть бути під 220 В. Готовий пристрій живе лише в закритому корпусі.</p></div></div>
+          <div class="rule"><div class="ic" aria-hidden="true">💧</div><div><b>Сухі руки, без металу</b><p>Мокра шкіра — у сто разів менший опір. Браслети й каблучки знімаємо.</p></div></div>
+          <div class="rule"><div class="ic" aria-hidden="true">🛡️</div><div><b>ПЗВ на 30 мА</b><p>Автомат, що вимикає мережу, коли струм тече «не туди». Його наявність перевіряє дорослий.</p></div></div>
+        </div>
+        <div class="nazar">
+          <svg viewBox="0 0 70 70" aria-hidden="true"><circle cx="35" cy="35" r="32" fill="#1D4FA6"/><circle cx="35" cy="35" r="22" fill="#FFFFFF"/><circle cx="35" cy="35" r="14" fill="#5B98D6"/><circle cx="35" cy="35" r="7" fill="#12203A"/><circle cx="31" cy="31" r="2.4" fill="#FFFFFF"/></svg>
+          <p><b>Назар-бонджук</b> у цьому місті висить усюди, «від лихого ока». Від струму він не захистить. Захищають правила, корпус, ПЗВ і дорослий поруч.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3. РЕЛЕ ================= -->
+  <section class="stop" id="relay">
+    <div class="stop-head">
+      <div class="stop-no">3</div>
+      <div>
+        <div class="place">Босфор · два береги без дроту</div>
+        <h2>Як працює реле</h2>
+        <p class="sub">Реле — це вимикач, який натискає магніт. Натисніть кнопку і подайте на D4 «увімкнути».</p>
+      </div>
+    </div>
+    <div class="relay-grid">
+      <div class="panel relay-stage">
+        <svg viewBox="0 0 640 330" id="relaySvg" role="img" aria-label="Модель реле: котушка на березі 5 В, контакти на березі 220 В">
+          <rect width="640" height="330" fill="#FDF6EC"/>
+          <!-- береги і вода -->
+          <rect x="0" y="0" width="262" height="330" fill="#EAF1E4"/>
+          <rect x="378" y="0" width="262" height="330" fill="#F7E6E0"/>
+          <rect x="262" y="0" width="116" height="330" fill="#5B98D6"/>
+          <g class="wave" fill="none" stroke="#CFE2F7" stroke-width="2" stroke-linecap="round"><path d="M272 60 q10 -6 20 0 t20 0 t20 0 t20 0"/><path d="M272 270 q10 -6 20 0 t20 0 t20 0 t20 0"/><path d="M272 300 q10 -6 20 0 t20 0 t20 0 t20 0"/></g>
+          <g font-family="Golos Text, Arial" font-weight="700" font-size="14">
+            <text x="16" y="26" fill="#12203A">Котушка · 5 В</text>
+            <text x="16" y="44" fill="#56657F" font-weight="500" font-size="12.5">Arduino, безпечно</text>
+            <text x="392" y="26" fill="#A82B16">Контакти · до 220 В</text>
+            <text x="392" y="44" fill="#56657F" font-weight="500" font-size="12.5">підсилювач, лише дорослий</text>
+            <text x="276" y="26" fill="#FFFFFF" font-size="12.5">Босфор:</text>
+            <text x="276" y="42" fill="#FFFFFF" font-size="12.5" font-weight="500">лише магніт</text>
+          </g>
+          <!-- Arduino D4 і модуль -->
+          <rect x="22" y="84" width="74" height="52" rx="8" fill="#1D4FA6"/>
+          <text x="59" y="108" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" font-weight="700" fill="#FFFFFF">Arduino</text>
+          <text x="59" y="126" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" font-weight="700" fill="#F6C76E">D4</text>
+          <path class="wire-on" d="M96 110 H130 V236 H150" fill="none" stroke-width="4"/>
+          <circle class="led-mod" cx="130" cy="160" r="6"/>
+          <text x="140" y="164" font-family="Golos Text, Arial" font-size="11.5" fill="#56657F">світлодіод модуля</text>
+          <!-- котушка -->
+          <rect class="coil-glow" x="146" y="210" width="104" height="66" rx="14" fill="#F6C76E" opacity=".0"/>
+          <rect x="152" y="216" width="92" height="54" rx="8" fill="#B87414"/>
+          <g stroke="#7A4B05" stroke-width="3"><line x1="164" y1="216" x2="164" y2="270"/><line x1="176" y1="216" x2="176" y2="270"/><line x1="188" y1="216" x2="188" y2="270"/><line x1="200" y1="216" x2="200" y2="270"/><line x1="212" y1="216" x2="212" y2="270"/><line x1="224" y1="216" x2="224" y2="270"/><line x1="236" y1="216" x2="236" y2="270"/></g>
+          <text x="198" y="294" text-anchor="middle" font-family="Golos Text, Arial" font-size="12.5" font-weight="700" fill="#12203A">котушка</text>
+          <g class="field" fill="none" stroke="#E39B26" stroke-width="2" stroke-dasharray="4 5"><path d="M160 210 q38 -26 76 0"/><path d="M150 206 q48 -40 96 0"/></g>
+          <!-- язичок (важіль) з віссю посеред Босфору -->
+          <g class="lever">
+            <rect x="166" y="184" width="310" height="12" rx="6" fill="#56657F"/>
+            <rect x="166" y="184" width="80" height="12" rx="6" fill="#2A3B55"/>
+            <circle cx="476" cy="190" r="8" fill="#C9A04A" stroke="#2A3B55" stroke-width="2"/>
+          </g>
+          <circle cx="320" cy="190" r="10" fill="#FFFFFF" stroke="#2A3B55" stroke-width="3"/>
+          <text x="320" y="226" text-anchor="middle" font-family="Golos Text, Arial" font-size="12" font-weight="700" fill="#FFFFFF">язичок</text>
+          <!-- контакти -->
+          <rect x="486" y="156" width="26" height="10" rx="3" fill="#C9A04A" stroke="#2A3B55" stroke-width="2"/>
+          <rect x="486" y="214" width="26" height="10" rx="3" fill="#C9A04A" stroke="#2A3B55" stroke-width="2"/>
+          <g font-family="JetBrains Mono, monospace" font-size="13" font-weight="700" fill="#12203A">
+            <text x="518" y="166">NO</text>
+            <text x="518" y="224">NC</text>
+            <text x="402" y="128">COM</text>
+          </g>
+          <path d="M424 134 V176" stroke="#2A3B55" stroke-width="2" stroke-dasharray="3 3"/>
+          <!-- NO → лампа підсилювача -->
+          <path class="wire-on" d="M512 161 H560 V112" fill="none" stroke-width="4"/>
+          <path class="wire-nc" d="M512 219 H548" fill="none" stroke-width="4"/>
+          <text x="552" y="236" font-family="Golos Text, Arial" font-size="11.5" fill="#56657F">не підключено</text>
+          <g>
+            <g class="lamp-rays" stroke="#E39B26" stroke-width="3" stroke-linecap="round"><line x1="560" y1="58" x2="560" y2="48"/><line x1="530" y1="72" x2="522" y2="66"/><line x1="590" y1="72" x2="598" y2="66"/><line x1="524" y1="96" x2="514" y2="96"/><line x1="596" y1="96" x2="606" y2="96"/></g>
+            <rect x="534" y="66" width="52" height="46" rx="8" class="lamp" stroke="#2A3B55" stroke-width="2.5"/>
+            <circle cx="560" cy="89" r="13" fill="none" stroke="#2A3B55" stroke-width="2.5"/>
+            <circle cx="560" cy="89" r="5" fill="#2A3B55"/>
+            <text x="560" y="134" text-anchor="middle" font-family="Golos Text, Arial" font-size="12.5" font-weight="700" fill="#12203A">підсилювач</text>
+          </g>
+        </svg>
+        <div class="relay-ctl">
+          <button class="bigbtn" id="relayBtn" type="button" aria-pressed="false">⚡ D4 = HIGH</button>
+          <span class="pinread" id="relayRead">реле: ВИМК · COM–NC</span>
+          <button class="ghost" id="soundBtn" type="button" aria-pressed="true">🔊 Клац</button>
+        </div>
+      </div>
+      <div class="panel">
+        <ol class="steps" id="relaySteps">
+          <li>Arduino подає на IN «увімкнути».</li>
+          <li>Транзистор на модулі пропускає струм через котушку. Котушка стає магнітом.</li>
+          <li>Магніт тягне язичок, і контакт перекидається: COM з'єднується з NO. Чути «клац».</li>
+          <li>Котушка і контакти не з'єднані дротом. Між ними лише магнітне поле, як Босфор між берегами.</li>
+          <li>Вимкнули струм — пружина повертає язичок. Діод на модулі гасить стрибок напруги котушки.</li>
+        </ol>
+        <div class="legend">
+          <div><b>COM</b><span>спільний</span></div>
+          <div><b>NO</b><span>розімкнений, поки реле спить</span></div>
+          <div><b>NC</b><span>замкнений, поки реле спить</span></div>
+        </div>
+        <div class="story"><b>Історія для Дениса.</b> Французьке <i>relais</i> — це станція, де втомлених поштових коней міняли на свіжих. У 1835 році американець Джозеф Генрі зробив електромагнітне реле. Пізніше телеграф Морзе передавав сигнал на сотні кілометрів «естафетою» від реле до реле.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 4. ПРИСТАНЬ / РОЗКЛАД ================= -->
+  <section class="stop" id="pier">
+    <div class="stop-head">
+      <div class="stop-no turq">4</div>
+      <div>
+        <div class="place">Пристань Каракьой · пором за розкладом</div>
+        <h2>Підсилювач прокидається заздалегідь</h2>
+        <p class="sub">Пором заводить двигун до відправлення, а не в ту саму секунду. Підсилювачу теж потрібен час, щоб прокинутися, інакше перші слова загубляться, а колонки «бахнуть».</p>
+      </div>
+    </div>
+    <div class="sim">
+      <div class="board" aria-label="Табло пристані">
+        <h3>Табло · İskele</h3>
+        <div class="row" data-at="32340"><span class="t">08:59:00</span><span>⚡</span><span class="what">Реле вмикає підсилювач — до події 60 с</span></div>
+        <div class="row" data-at="32400"><span class="t">09:00:00</span><span>🕯️</span><span class="what">Хвилина мовчання</span></div>
+        <div class="row" data-at="32460"><span class="t">09:01:00</span><span>🇺🇦</span><span class="what">Гімн України. Реле між подіями не клацає</span></div>
+        <div class="row" data-at="32530"><span class="t">кінець</span><span>⏳</span><span class="what">Тиша — чекаємо 15 с</span></div>
+        <div class="row" data-at="32545"><span class="t">+15 с</span><span>💤</span><span class="what">Реле вимикає підсилювач</span></div>
+      </div>
+      <div class="panel device">
+        <div class="oled-box"><canvas id="oled" width="128" height="64" aria-label="Екран OLED"></canvas></div>
+        <div class="sim-ctl">
+          <button class="bigbtn" id="simPlay" type="button" aria-pressed="false">▶ Пуск</button>
+          <span class="clock" id="simClock">08:58:30</span>
+          <input type="range" id="simRange" min="32310" max="32580" step="1" value="32310" aria-label="Час симуляції">
+        </div>
+        <div>
+          <div class="track" id="track"><div class="seg-r" id="segR"></div><div class="seg-p s" id="segS"></div><div class="seg-p a" id="segA"></div><div class="cur" id="cur"></div></div>
+          <div class="track-legend"><span><i style="background:var(--saffron)"></i>реле УВІМК</span><span><i style="background:var(--cobalt)"></i>хвилина мовчання</span><span><i style="background:var(--turq)"></i>гімн</span></div>
+        </div>
+        <div class="status"><span id="stRelay">реле: ВИМК</span><span id="stPlay">тиша</span></div>
+        <div class="log" id="log" aria-live="polite"></div>
+        <p class="note">Симулятор повторює логіку скетчу: <code>AMP_LEAD_SEC = 60</code>, <code>AMP_HOLD_MS = 15000</code>. Тривалість треків тут умовна. ▶ з'являється лише тоді, коли DFPlayer підтвердив звук (BUSY = LOW).</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 5. БАЗАР: СХЕМА І КОД ================= -->
+  <section class="stop" id="bazaar">
+    <div class="stop-head">
+      <div class="stop-no saff">5</div>
+      <div>
+        <div class="place">Гранд-базар · деталі й дроти</div>
+        <h2>Схема і скетч</h2>
+        <p class="sub">Дроти уроків 1–3 не чіпаємо. Додаємо модуль реле на вільний пін D4. Модель реле ще не обрана, тому порядок виводів і рівень увімкнення перевіряємо на своєму модулі.</p>
+      </div>
+    </div>
+    <div class="bazaar">
+      <div class="panel">
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Звідки</th><th>Куди</th><th>Навіщо</th></tr></thead>
+            <tbody>
+              <tr><td>Реле <code>IN</code></td><td>Uno <code>D4</code></td><td>команда «увімкни»</td></tr>
+              <tr><td>Реле <code>VCC</code></td><td>Uno <code>5V</code></td><td>живлення котушки</td></tr>
+              <tr><td>Реле <code>GND</code></td><td>Uno <code>GND</code></td><td>спільна «земля»</td></tr>
+              <tr><td>Реле <code>COM</code></td><td>Uno <code>5V</code></td><td>«живлення підсилювача» на уроці</td></tr>
+              <tr><td>Реле <code>NO</code></td><td>220 Ом → світлодіод → <code>GND</code></td><td>«підсилювач»</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="wiring" id="wiring">
+          <svg viewBox="0 0 560 370" role="img" aria-label="Схема: реле IN на D4, VCC на 5V, GND на GND; COM на 5V; NO через 220 Ом на світлодіод AMP, світлодіод на GND">
+            <rect width="560" height="370" rx="14" fill="#F7F9FC"/>
+            <!-- Uno -->
+            <rect x="24" y="112" width="232" height="150" rx="12" fill="#0F6E8C"/>
+            <rect x="34" y="124" width="40" height="28" rx="4" fill="#BFC8D4"/>
+            <text x="140" y="190" text-anchor="middle" fill="#FFFFFF" font-family="JetBrains Mono, monospace" font-size="20" font-weight="700">UNO</text>
+            <text x="140" y="210" text-anchor="middle" fill="#BFE9F5" font-family="Golos Text, Arial" font-size="11">DFPlayer, DS3231, OLED, кнопки</text>
+            <text x="140" y="224" text-anchor="middle" fill="#BFE9F5" font-family="Golos Text, Arial" font-size="11">— як в уроці 3</text>
+            <g font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#FFFFFF">
+              <circle cx="120" cy="120" r="6" fill="#FFC94A"/><text x="120" y="142" text-anchor="middle">D4</text>
+              <circle cx="80" cy="254" r="6" fill="#FFC94A"/><text x="80" y="244" text-anchor="middle">5V</text>
+              <circle cx="120" cy="254" r="6" fill="#FFC94A"/><text x="120" y="244" text-anchor="middle">GND</text>
+            </g>
+            <!-- модуль реле -->
+            <rect x="320" y="34" width="190" height="140" rx="10" fill="#1D4FA6"/>
+            <rect x="380" y="52" width="74" height="60" rx="6" fill="#3E7BE0" stroke="#12203A" stroke-width="2"/>
+            <text x="417" y="80" text-anchor="middle" fill="#FFFFFF" font-family="Golos Text, Arial" font-size="12" font-weight="700">РЕЛЕ</text>
+            <text x="417" y="96" text-anchor="middle" fill="#DCE6F7" font-family="Golos Text, Arial" font-size="10">5 В · модель ?</text>
+            <circle class="w-relled" cx="480" cy="62" r="6" fill="#5A2A2A"/>
+            <text x="480" y="82" text-anchor="middle" fill="#DCE6F7" font-family="Golos Text, Arial" font-size="9">LED</text>
+            <g font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#FFFFFF">
+              <circle cx="328" cy="70" r="5" fill="#FFC94A"/><text x="338" y="74">IN</text>
+              <circle cx="328" cy="96" r="5" fill="#FFC94A"/><text x="338" y="100">VCC</text>
+              <circle cx="328" cy="122" r="5" fill="#FFC94A"/><text x="338" y="126">GND</text>
+            </g>
+            <rect x="350" y="146" width="140" height="30" rx="4" fill="#2E8B57" stroke="#12203A" stroke-width="2"/>
+            <g fill="#C9D3E2" stroke="#12203A" stroke-width="1.5"><circle cx="370" cy="161" r="7"/><circle cx="420" cy="161" r="7"/><circle cx="470" cy="161" r="7"/></g>
+            <g font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#12203A">
+              <text x="370" y="196" text-anchor="middle">NO</text><text x="420" y="196" text-anchor="middle">COM</text><text x="470" y="196" text-anchor="middle">NC</text>
+            </g>
+            <text x="500" y="214" text-anchor="middle" font-family="Golos Text, Arial" font-size="10" fill="#56657F">NC — не чіпаємо</text>
+            <!-- дроти: клацни, щоб дізнатися, навіщо -->
+            <g class="w" data-say="D4 → IN: команда «увімкни». Це той самий pinMode(PIN_RELAY, OUTPUT)."><path class="w-sig" d="M120 114 V70 H322" stroke="#7B3FC4" stroke-width="5" fill="none" stroke-linecap="round"/></g>
+            <g class="w" data-say="5V → VCC: живлення котушки. Котушка бере 70–90 мА — тому на модулі є транзистор."><path d="M80 260 V330 H290 V96 H322" stroke="#C8371F" stroke-width="5" fill="none" stroke-linejoin="round"/></g>
+            <g class="w" data-say="GND → GND: спільна «земля». Без неї Arduino і реле «не розуміють» одне одного."><path d="M120 260 V310 H280 V122 H322" stroke="#12203A" stroke-width="5" fill="none" stroke-linejoin="round"/></g>
+            <g class="w" data-say="5V → COM: на уроці «живлення підсилювача» — безпечні 5 В. Справжні 220 В підключає лише дорослий електрик."><path d="M420 168 V230 H290" stroke="#C8371F" stroke-width="5" fill="none" stroke-dasharray="10 6" stroke-linejoin="round"/></g>
+            <circle cx="290" cy="230" r="5" fill="#C8371F"/>
+            <g class="w" data-say="NO → резистор 220 Ом: замикається, коли реле клацнуло. Резистор береже світлодіод."><path class="w-load" d="M370 168 V262 H392" stroke="#E39B26" stroke-width="5" fill="none" stroke-linejoin="round"/></g>
+            <rect x="392" y="254" width="56" height="16" rx="6" fill="#E8D7B5" stroke="#12203A" stroke-width="2"/>
+            <g fill="#C8371F"><rect x="404" y="254" width="4" height="16"/><rect x="414" y="254" width="4" height="16"/><rect x="430" y="254" width="4" height="16" fill="#8E5A0C"/></g>
+            <text x="420" y="290" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#12203A">220 Ом</text>
+            <path class="w-load" d="M448 262 H486" stroke="#E39B26" stroke-width="5" fill="none"/>
+            <!-- світлодіод «підсилювач» -->
+            <circle class="w-ampglow" cx="500" cy="262" r="26" fill="#FFC233" opacity="0"/>
+            <path class="w-amp" d="M486 270 V254 a14 14 0 0 1 28 0 V270 z" fill="#F2D3A6" stroke="#12203A" stroke-width="2"/>
+            <text x="500" y="236" text-anchor="middle" font-family="Golos Text, Arial" font-size="12" font-weight="700" fill="#12203A">AMP</text>
+            <text x="532" y="266" font-family="Golos Text, Arial" font-size="10" fill="#56657F">«підсилювач»</text>
+            <g class="w" data-say="Світлодіод → GND: коло замкнулось. Немає замкненого кола — немає струму."><path d="M500 270 V344 H280 V310" stroke="#12203A" stroke-width="5" fill="none" stroke-linejoin="round"/></g>
+            <circle cx="280" cy="310" r="5" fill="#12203A"/>
+          </svg>
+          <div class="relay-ctl">
+            <button class="bigbtn" id="wireBtn" type="button" aria-pressed="false">⚡ D4 = HIGH</button>
+            <span class="pinread">клацни будь-який дріт — він розкаже, навіщо він</span>
+          </div>
+        </div>
+        <p class="note">Котушка реле бере 70–90 мА, а пін Arduino дає лише ~20 мА. Тому беремо модуль з транзистором і діодом, а не голе реле.</p>
+      </div>
+      <div class="panel">
+        <pre class="code"><span class="c">// Найперше в setup(): реле ВИМКНЕНЕ (безпечний стан)</span>
+writeRelay(<span class="k">false</span>);
+pinMode(PIN_RELAY, OUTPUT);
+
+<span class="c">// Що хочемо від реле просто зараз</span>
+<span class="k">bool</span> ampWanted() {
+  <span class="k">if</span> (ampMode == AMP_FORCE_ON)  <span class="k">return true</span>;
+  <span class="k">if</span> (ampMode == AMP_FORCE_OFF) <span class="k">return false</span>;
+  <span class="c">// грає, щойно грало (15 с) або подія ≤ 60 с</span>
+  <span class="k">return</span> active || soundHold || eventSoon;
+}</pre>
+        <div class="cmds">
+          <div><code>AMP</code><span>показати стан реле</span></div>
+          <div><code>AMP ON</code><span>увімкнути вручну</span></div>
+          <div><code>AMP OFF</code><span>вимкнути вручну</span></div>
+          <div><code>AMP AUTO</code><span>знову за розкладом</span></div>
+        </div>
+        <p class="note">Реле не каже, чи підсилювач справді увімкнувся. Тому скетч пише «Реле: УВІМК», а не «підсилювач працює». Перевірка — світлодіод на модулі і звук у колонках.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 6. ЧАЙ: DoD ================= -->
+  <section class="stop" id="tea">
+    <div class="stop-head">
+      <div class="stop-no">6</div>
+      <div>
+        <div class="place">Чай у тюльпанній склянці · підсумок</div>
+        <h2>Готово, якщо…</h2>
+        <p class="sub">Відмітьте разом наприкінці уроку.</p>
+      </div>
+    </div>
+    <div class="dod" id="dod">
+      <label><input type="checkbox" id="d1"><span>Кожен пояснює, чому 220 В небезпечні, а 5 В — ні.</span></label>
+      <label><input type="checkbox" id="d2"><span>Модуль реле на D4, уроки 1–3 працюють як раніше.</span></label>
+      <label><input type="checkbox" id="d3"><span>Після RESET реле вимкнене.</span></label>
+      <label><input type="checkbox" id="d4"><span>За хвилину до події реле клацає, на екрані ⚡.</span></label>
+      <label><input type="checkbox" id="d5"><span>Між хвилиною мовчання і гімном реле не клацає.</span></label>
+      <label><input type="checkbox" id="d6"><span>Через 15 с тиші реле вимикається.</span></label>
+      <label><input type="checkbox" id="d7"><span>Денис пояснив реле: котушка, язичок, COM / NO / NC.</span></label>
+      <label><input type="checkbox" id="d8"><span>Олекса завів у Trello хоча б один баг.</span></label>
+    </div>
+    <div class="tea">
+      <svg viewBox="0 0 90 110" aria-hidden="true">
+        <path class="steam" d="M38 22 q-6 -8 0 -16" stroke="#56657F" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path class="steam s2" d="M52 22 q-6 -8 0 -16" stroke="#56657F" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M24 30 h42 q-10 22 -2 40 q4 12 -8 22 h-22 q-12 -10 -8 -22 q8 -18 -2 -40 z" fill="#C8371F" opacity=".85" stroke="#12203A" stroke-width="2.5"/>
+        <path d="M24 30 h42" stroke="#C9A04A" stroke-width="5"/>
+        <ellipse cx="45" cy="100" rx="30" ry="6" fill="#FFFFFF" stroke="#12203A" stroke-width="2.5"/>
+      </svg>
+      <p><b>Наступного разу:</b> інтерфейс і стани на екрані (урок 5). А поки що — аудіо в підсилювач: у DFPlayer є лінійний вихід, але вхід шкільного підсилювача ще треба перевірити разом з дорослим.</p>
+    </div>
+  </section>
+
+  <footer>STEM-93 · Smart School Bell · Урок 4. Arduino Uno + DFPlayer Mini + DS3231 + OLED + кнопки + модуль реле (модель ще не обрано).</footer>
+</main>
+
+<script>
+(() => {
+  // ---------- команда: позначка «виступ» ----------
+  document.querySelectorAll('.prof .done').forEach((b) => {
+    b.addEventListener('click', () => {
+      const on = b.getAttribute('aria-pressed') !== 'true';
+      b.setAttribute('aria-pressed', on);
+      b.closest('.prof').querySelector('svg').classList.toggle('dance', on);
+    });
+  });
+
+  // ---------- безпека: закон Ома ----------
+  const voltSeg = document.getElementById('voltSeg');
+  const skinSeg = document.getElementById('skinSeg');
+  let U = 5, R = 10000;
+  const fmt = (x) => (x >= 100 ? Math.round(x) : x >= 10 ? x.toFixed(0) : x >= 1 ? x.toFixed(1) : x.toFixed(2)).toString().replace('.', ',');
+  const kOhm = (r) => (r / 1000) + ' кОм';
+  function zone(mA) {
+    if (mA < 1) return ['Нічого не відчуєш.', false];
+    if (mA < 10) return ['Поколювання. Неприємно, але не відпускати дріт ти ще можеш.', false];
+    if (mA < 30) return ['М\'язи стискаються: не можеш відпустити дріт. Це вже небезпечно.', true];
+    if (mA < 50) return ['Важко дихати. На такий струм розраховане ПЗВ.', true];
+    return ['Серце може зупинитися. Смертельно небезпечно.', true];
+  }
+  function updOhm() {
+    const mA = U / R * 1000;
+    document.getElementById('fText').textContent = U + ' В / ' + kOhm(R) + ' =';
+    const big = document.getElementById('fBig');
+    big.textContent = fmt(mA) + ' мА';
+    const [txt, hot] = zone(mA);
+    big.classList.toggle('hot', hot);
+    const v = document.getElementById('verdict');
+    v.textContent = txt;
+    v.classList.toggle('hot', hot);
+    const pos = Math.max(0, Math.min(100, (Math.log10(mA) + 1) * 25));
+    document.getElementById('mPin').style.left = pos + '%';
+  }
+  function bindSeg(seg, key, set) {
+    seg.addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      seg.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+      set(Number(b.dataset[key]));
+      updOhm();
+    });
+  }
+  bindSeg(voltSeg, 'v', (v) => { U = v; });
+  bindSeg(skinSeg, 'r', (r) => { R = r; });
+  updOhm();
+
+  // ---------- реле: клацання ----------
+  let audio = null, soundOn = true;
+  function click(on) {
+    if (!soundOn) return;
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      const t = audio.currentTime;
+      const len = Math.floor(audio.sampleRate * 0.03);
+      const buf = audio.createBuffer(1, len, audio.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 6);
+      const src = audio.createBufferSource();
+      src.buffer = buf;
+      const f = audio.createBiquadFilter();
+      f.type = 'bandpass'; f.frequency.value = on ? 2600 : 1800; f.Q.value = 1.2;
+      const g = audio.createGain(); g.gain.value = 0.9;
+      src.connect(f).connect(g).connect(audio.destination);
+      src.start(t);
+    } catch (e) { /* без звуку теж працює */ }
+  }
+  const relaySvg = document.getElementById('relaySvg');
+  const relayBtn = document.getElementById('relayBtn');
+  const relayRead = document.getElementById('relayRead');
+  const steps = [...document.querySelectorAll('#relaySteps li')];
+  let stepTimer = [];
+  relayBtn.addEventListener('click', () => {
+    const on = relayBtn.getAttribute('aria-pressed') !== 'true';
+    relayBtn.setAttribute('aria-pressed', on);
+    relayBtn.textContent = on ? '💤 D4 = LOW' : '⚡ D4 = HIGH';
+    relaySvg.classList.toggle('on', on);
+    relayRead.textContent = on ? 'реле: УВІМК · COM–NO' : 'реле: ВИМК · COM–NC';
+    click(on);
+    stepTimer.forEach(clearTimeout); stepTimer = [];
+    steps.forEach((s) => s.classList.remove('lit'));
+    const seq = on ? [0, 1, 2, 3] : [4];
+    seq.forEach((i, k) => stepTimer.push(setTimeout(() => steps[i].classList.add('lit'), k * 380)));
+  });
+  const soundBtn = document.getElementById('soundBtn');
+  soundBtn.addEventListener('click', () => {
+    soundOn = !soundOn;
+    soundBtn.setAttribute('aria-pressed', soundOn);
+    soundBtn.textContent = soundOn ? '🔊 Клац' : '🔇 Тихо';
+  });
+
+  // ---------- пристань: симулятор розкладу ----------
+  // Іконки 16×16 — ті самі байти, що в sketch/icons.h (стовпчики по 8 пікселів, молодший біт згори).
+  const ICON = {
+    clock: [0xE0,0x18,0x04,0x02,0x02,0x01,0x01,0xFD,0x81,0x81,0x81,0x82,0x02,0x04,0x18,0xE0, 0x03,0x0C,0x10,0x20,0x20,0x40,0x40,0x40,0x40,0x40,0x40,0x20,0x20,0x10,0x0C,0x03],
+    candle:[0x00,0x00,0x00,0x00,0x80,0x98,0xBE,0xFF,0xBC,0x90,0x80,0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x40,0x40,0x7F,0x40,0x40,0x40,0x40,0x40,0x7F,0x40,0x40,0x00,0x00,0x00],
+    flag:  [0x00,0xFF,0x1E,0x1E,0x1E,0x1E,0x1E,0x1E,0x1E,0x1E,0x1E,0x1E,0xFE,0x00,0x00,0x00, 0x40,0x7F,0x41,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x00,0x00,0x00],
+    quote: [0xFC,0x02,0x02,0x9A,0x7A,0x32,0x02,0x02,0x02,0x02,0x9A,0x7A,0x32,0x02,0x02,0xFC, 0x01,0x02,0x02,0x12,0x0C,0x06,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x01],
+    play:  [0x00,0x00,0x00,0xFE,0xFC,0xF8,0xF0,0xE0,0xC0,0x80,0x00,0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x7F,0x3F,0x1F,0x0F,0x07,0x03,0x01,0x00,0x00,0x00,0x00,0x00,0x00],
+    amp:   [0x00,0x00,0x00,0x00,0x20,0x70,0x78,0x7C,0x7E,0xFF,0xFF,0xEF,0xE7,0xE3,0x01,0x00, 0x00,0x80,0x40,0x60,0x30,0x18,0x1C,0x0E,0x07,0x07,0x03,0x01,0x01,0x00,0x00,0x00],
+  };
+  const cv = document.getElementById('oled');
+  const ctx = cv.getContext('2d');
+  const PX = getComputedStyle(document.documentElement).getPropertyValue('--oled-px').trim() || '#DDF2FF';
+  const BG = getComputedStyle(document.documentElement).getPropertyValue('--oled-bg').trim() || '#05080E';
+  function icon(name, cx, cy) {
+    const b = ICON[name]; if (!b) return;
+    ctx.fillStyle = PX;
+    for (let half = 0; half < 2; half++)
+      for (let c = 0; c < 16; c++) {
+        const v = b[half * 16 + c];
+        for (let r = 0; r < 8; r++) if (v & (1 << r)) ctx.fillRect(cx + c, cy + half * 8 + r, 1, 1);
+      }
+  }
+  function txt(s, x, y) {
+    ctx.fillStyle = PX;
+    ctx.font = 'bold 16px "JetBrains Mono", Consolas, monospace';
+    ctx.textBaseline = 'top';
+    for (let i = 0; i < s.length; i++) ctx.fillText(s[i], x + i * 16, y + 1);
+  }
+
+  // Логіка — як у скетчі: реле = подія ≤ 60 с || грає || тиша < 15 с.
+  const T0 = 32310, T1 = 32580;              // 08:58:30 … 09:03:00
+  const SIL = [32400, 32460], ANT = [32460, 32530]; // умовна тривалість треків
+  const LEAD = 60, HOLD = 15;
+  const hhmmss = (t) => [Math.floor(t / 3600), Math.floor(t / 60) % 60, t % 60].map((n) => String(n).padStart(2, '0')).join(':');
+  function stateAt(t) {
+    const silence = t >= SIL[0] && t < SIL[1];
+    const anthem = t >= ANT[0] && t < ANT[1];
+    const soon = (t < SIL[0] && SIL[0] - t <= LEAD) || (t < ANT[0] && ANT[0] - t <= LEAD);
+    const hold = t >= ANT[1] && t - ANT[1] < HOLD;
+    return { silence, anthem, relay: soon || silence || anthem || hold };
+  }
+  const LOG = [
+    [32340, 'Реле: УВІМК (авто)', true],
+    [32400, '⏰ НАСТАВ ЧАС ПОДІЇ 1) 09:00 — хвилина мовчання'],
+    [32400, 'ГРАЄ: відтворення підтверджено (BUSY = LOW).'],
+    [32460, '⏰ НАСТАВ ЧАС ПОДІЇ 2) 09:01 — гімн України'],
+    [32460, 'ГРАЄ: відтворення підтверджено (BUSY = LOW).'],
+    [32530, 'ГОТОВО: трек більше не грає.'],
+    [32545, 'Реле: ВИМК (авто)', true],
+  ];
+  const range = document.getElementById('simRange');
+  const clockEl = document.getElementById('simClock');
+  const stRelay = document.getElementById('stRelay');
+  const stPlay = document.getElementById('stPlay');
+  const logEl = document.getElementById('log');
+  const rows = [...document.querySelectorAll('.board .row')];
+  const pct = (t) => ((t - T0) / (T1 - T0) * 100) + '%';
+  const seg = (el, a, b) => { el.style.left = pct(a); el.style.width = 'calc(' + pct(b) + ' - ' + pct(a) + ')'; };
+  seg(document.getElementById('segR'), 32340, 32545);
+  seg(document.getElementById('segS'), SIL[0], SIL[1]);
+  seg(document.getElementById('segA'), ANT[0], ANT[1]);
+  let lastRelay = null;
+  function render(t, fromPlay) {
+    const s = stateAt(t);
+    clockEl.textContent = hhmmss(t);
+    document.getElementById('cur').style.left = pct(t);
+    // OLED: годинник + 3 події, як на справжньому екрані
+    ctx.fillStyle = BG; ctx.fillRect(0, 0, 128, 64);
+    const hh = String(Math.floor(t / 3600)).padStart(2, '0'), mm = String(Math.floor(t / 60) % 60).padStart(2, '0');
+    icon('clock', 0, 0); txt(hh + (t % 2 ? ' ' : ':') + mm, 24, 0); if (s.relay) icon('amp', 112, 0);
+    icon('candle', 0, 16); txt('09:00', 24, 16); if (s.silence) icon('play', 112, 16);
+    icon('flag', 0, 32); txt('09:01', 24, 32); if (s.anthem) icon('play', 112, 32);
+    icon('quote', 0, 48); txt('12:10', 24, 48);
+    stRelay.textContent = s.relay ? '⚡ реле: УВІМК' : 'реле: ВИМК';
+    stRelay.classList.toggle('on', s.relay);
+    stPlay.textContent = s.silence ? '▶ хвилина мовчання' : s.anthem ? '▶ гімн' : 'тиша';
+    stPlay.classList.toggle('play', s.silence || s.anthem);
+    if (fromPlay && lastRelay !== null && lastRelay !== s.relay) click(s.relay);
+    lastRelay = s.relay;
+    logEl.innerHTML = '';
+    LOG.filter((l) => l[0] <= t).forEach((l) => {
+      const d = document.createElement('div');
+      d.textContent = hhmmss(l[0]) + '  ' + l[1];
+      if (l[2]) d.className = 'r';
+      logEl.appendChild(d);
+    });
+    logEl.scrollTop = logEl.scrollHeight;
+    let now = -1;
+    rows.forEach((r, i) => { if (t >= Number(r.dataset.at)) now = i; });
+    rows.forEach((r, i) => r.classList.toggle('now', i === now));
+  }
+  const playBtn = document.getElementById('simPlay');
+  let timer = null, t = T0;
+  function stop() { clearInterval(timer); timer = null; playBtn.textContent = '▶ Пуск'; playBtn.setAttribute('aria-pressed', 'false'); }
+  playBtn.addEventListener('click', () => {
+    if (timer) { stop(); return; }
+    if (t >= T1) t = T0;
+    playBtn.textContent = '⏸ Пауза'; playBtn.setAttribute('aria-pressed', 'true');
+    timer = setInterval(() => {
+      t += 1;
+      range.value = t;
+      render(t, true);
+      if (t >= T1) stop();
+    }, 100); // 1 секунда розкладу = 0,1 с на екрані (×10)
+  });
+  range.addEventListener('input', () => { t = Number(range.value); render(t, false); });
+  render(t, false);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => render(t, false));
+
+  // ---------- DoD: пам'ятаємо галочки в цьому браузері ----------
+  document.querySelectorAll('#dod input').forEach((cb) => {
+    try { cb.checked = localStorage.getItem('stem93-l4-' + cb.id) === '1'; } catch (e) {}
+    cb.addEventListener('change', () => { try { localStorage.setItem('stem93-l4-' + cb.id, cb.checked ? '1' : '0'); } catch (e) {} });
+  });
+})();
+</script>
+
+<script>
+// Іграшки «міста на двох берегах»: усе тут — для настрою, логіки уроку не змінює.
+(() => {
+  // ---------- звуки (синтезуємо, без файлів) ----------
+  let ac = null, sound = true;
+  function A() { try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); return ac; } catch (e) { return null; } }
+  function tone(type, f0, f1, dur, vol = .25, delay = 0) {
+    if (!sound) return;
+    const a = A(); if (!a) return;
+    const t = a.currentTime + delay;
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .03); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + .05);
+  }
+  const SFX = {
+    meow() { tone('triangle', 620, 980, .18, .22); tone('triangle', 980, 480, .32, .22, .17); },
+    horn() { tone('sawtooth', 110, 104, .8, .12); tone('sawtooth', 165, 158, .8, .08); },
+    squawk() { tone('square', 1500, 900, .12, .07); tone('square', 1400, 800, .14, .07, .16); },
+    pop() { tone('sine', 500, 1300, .12, .25); },
+    chime() { tone('sine', 880, 878, .7, .15); tone('sine', 1320, 1318, .9, .08, .08); },
+    tick() { tone('square', 2200, 1800, .04, .08); },
+    zap() { tone('sawtooth', 1800, 60, .35, .12); },
+    pour() { tone('sine', 300, 700, .8, .1); },
+  };
+  const bar = document.querySelector('.topbar .wrap');
+  const mute = document.createElement('button');
+  mute.className = 'mute'; mute.type = 'button'; mute.textContent = '🔊 звук'; mute.setAttribute('aria-pressed', 'true');
+  mute.addEventListener('click', () => { sound = !sound; mute.textContent = sound ? '🔊 звук' : '🔇 тихо'; mute.setAttribute('aria-pressed', sound); });
+  bar.appendChild(mute);
+
+  // ---------- бульбашка з текстом над елементом ----------
+  function say(el, html, ms = 2800) {
+    const r = el.getBoundingClientRect();
+    const b = document.createElement('div');
+    b.className = 'bubble'; b.innerHTML = html;
+    document.body.appendChild(b);
+    const w = b.offsetWidth, h = b.offsetHeight;
+    const left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2));
+    let top = r.top - h - 10; if (top < 60) top = r.bottom + 10;
+    b.style.left = (left + window.scrollX) + 'px';
+    b.style.top = (top + window.scrollY) + 'px';
+    setTimeout(() => b.remove(), ms);
+  }
+  function burst(el, chars, n = 10) {
+    const r = el.getBoundingClientRect();
+    for (let i = 0; i < n; i++) {
+      const p = document.createElement('span');
+      p.className = 'petal'; p.textContent = chars[i % chars.length];
+      p.style.left = (r.left + r.width / 2 + window.scrollX - 9) + 'px';
+      p.style.top = (r.top + r.height / 3 + window.scrollY) + 'px';
+      const ang = Math.random() * Math.PI * 2, d = 40 + Math.random() * 70;
+      p.style.setProperty('--dx', Math.cos(ang) * d + 'px');
+      p.style.setProperty('--dy', (Math.sin(ang) * d - 30) + 'px');
+      p.style.setProperty('--rot', (Math.random() * 360 - 180) + 'deg');
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 1200);
+    }
+  }
+  const replay = (el, cls) => { el.classList.remove(cls); void el.getBoundingClientRect(); el.classList.add(cls); };
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+  // ---------- ілюстрації біля заголовків ----------
+  const LAND = {
+    team: { cls: 'galata', hint: 'клацни вежу', svg: `
+      <svg viewBox="0 -16 120 116"><g class="flag"><line x1="60" y1="2" x2="60" y2="-14" stroke="#2A3B55" stroke-width="2"/><path d="M60 -14 h18 l-5 5 l5 5 h-18 z" fill="#C8371F"/></g>
+      <path d="M40 34 L60 2 L80 34 Z" fill="#3E5F8C" stroke="#2A3B55" stroke-width="2.5" stroke-linejoin="round"/>
+      <rect x="38" y="32" width="44" height="9" fill="#D7C6AB" stroke="#2A3B55" stroke-width="2.5"/>
+      <rect x="43" y="41" width="34" height="56" fill="#E7D9C2" stroke="#2A3B55" stroke-width="2.5"/>
+      <g class="win" fill="#2A3B55"><rect x="48" y="48" width="6" height="11" rx="3"/><rect x="57" y="48" width="6" height="11" rx="3"/><rect x="66" y="48" width="6" height="11" rx="3"/><rect x="51" y="70" width="6" height="10" rx="3"/><rect x="63" y="70" width="6" height="10" rx="3"/></g>
+      <path d="M10 97 h100" stroke="#2A3B55" stroke-width="2.5"/></svg>`,
+      click(el) { el.classList.toggle('lit'); SFX.chime(); say(el, el.classList.contains('lit') ? 'Merhaba! <small>«привіт» турецькою. Галатській вежі майже 700 років</small>' : 'Вогні вимкнено. Економимо енергію, як реле 😉'); } },
+    safety: { cls: 'nz', hint: 'подивись в око', svg: `
+      <svg viewBox="0 0 120 100"><path d="M60 0 v8" stroke="#2A3B55" stroke-width="2"/><circle cx="60" cy="50" r="40" fill="#1D4FA6" stroke="#2A3B55" stroke-width="2.5"/>
+      <circle cx="60" cy="50" r="28" fill="#FFFFFF"/><g class="pupil"><circle cx="60" cy="50" r="17" fill="#5B98D6"/><circle cx="60" cy="50" r="8" fill="#12203A"/><circle cx="55" cy="45" r="3" fill="#FFFFFF"/></g>
+      <rect class="lid" x="30" y="12" width="60" height="68" rx="30" fill="#1D4FA6"/></svg>`,
+      click(el) { replay(el, 'look'); SFX.tick(); say(el, pick(['Я лише скельце. Від струму рятує ПЗВ, а не я.', 'Бачу мокрі руки! 💧 Спершу витри.', 'Назар каже: USB витягни, потім дроти.', 'Я дивлюсь на 220 В… і не чіпаю. І ти не чіпай.'])); } },
+    relay: { cls: 'br', hint: 'пусти машинку', svg: `
+      <svg viewBox="0 0 120 100"><rect x="0" y="72" width="120" height="28" fill="#5B98D6"/>
+      <g stroke="#2A3B55" stroke-width="3"><line x1="30" y1="20" x2="30" y2="80"/><line x1="90" y1="20" x2="90" y2="80"/></g>
+      <path class="cable" d="M2 58 Q30 18 30 20 Q60 62 90 20 Q90 18 118 58" fill="none" stroke="#C8371F" stroke-width="3"/>
+      <rect x="0" y="58" width="120" height="6" fill="#2A3B55"/>
+      <g class="car"><rect x="4" y="50" width="14" height="8" rx="3" fill="#E39B26"/><circle cx="8" cy="58" r="2" fill="#12203A"/><circle cx="15" cy="58" r="2" fill="#12203A"/></g>
+      <text x="4" y="94" font-size="9" font-weight="700" fill="#FFFFFF" font-family="Golos Text, Arial">EU</text><text x="102" y="94" font-size="9" font-weight="700" fill="#FFFFFF" font-family="Golos Text, Arial">AS</text></svg>`,
+      click(el) { replay(el, 'go'); SFX.horn(); setTimeout(() => say(el, 'Європа → Азія! <small>Босфор — близько 30 км завдовжки</small>'), 900); } },
+    pier: { cls: 'fr', hint: 'посигналь', svg: `
+      <svg viewBox="0 0 120 100"><rect x="0" y="70" width="120" height="30" fill="#5B98D6"/>
+      <g class="boat"><circle class="puff" cx="62" cy="22" r="6" fill="#C9D3E2"/><circle class="puff p2" cx="66" cy="18" r="7" fill="#DCE6F7"/><circle class="puff p3" cx="70" cy="14" r="8" fill="#E8EEF6"/>
+      <path d="M8 58 h104 l-12 18 h-80 z" fill="#FFFFFF" stroke="#2A3B55" stroke-width="2.5"/>
+      <rect x="24" y="42" width="66" height="16" fill="#FFFFFF" stroke="#2A3B55" stroke-width="2.5"/>
+      <g fill="#2C6FB8"><rect x="30" y="46" width="8" height="7"/><rect x="42" y="46" width="8" height="7"/><rect x="54" y="46" width="8" height="7"/><rect x="66" y="46" width="8" height="7"/><rect x="78" y="46" width="8" height="7"/></g>
+      <rect x="54" y="28" width="12" height="14" fill="#C8371F" stroke="#2A3B55" stroke-width="2.5"/></g></svg>`,
+      click(el) { replay(el, 'honk'); SFX.horn(); say(el, pick(['Ту-ту! Vapur — це «пором».', 'Пором заводиться заздалегідь. Як наше реле за 60 с!', 'Відправлення о 09:00. Не запізнюйся!'])); } },
+    bazaar: { cls: 'lt', hint: 'розгойдай', svg: `
+      <svg viewBox="0 0 120 100"><path d="M0 4 h120" stroke="#2A3B55" stroke-width="3"/>
+      <g class="lamp-g l1"><line x1="22" y1="4" x2="22" y2="26" stroke="#2A3B55" stroke-width="1.5"/><path d="M14 26 h16 l4 14 l-4 26 h-16 l-4 -26 z" class="glow" fill="#C8371F" stroke="#2A3B55" stroke-width="2"/><path d="M16 66 l6 8 l6 -8" fill="#C9A04A"/></g>
+      <g class="lamp-g l2"><line x1="60" y1="4" x2="60" y2="16" stroke="#2A3B55" stroke-width="1.5"/><path d="M50 16 h20 l5 16 l-5 30 h-20 l-5 -30 z" class="glow" fill="#138F8F" stroke="#2A3B55" stroke-width="2"/><path d="M53 62 l7 9 l7 -9" fill="#C9A04A"/></g>
+      <g class="lamp-g l3"><line x1="98" y1="4" x2="98" y2="30" stroke="#2A3B55" stroke-width="1.5"/><path d="M90 30 h16 l4 14 l-4 24 h-16 l-4 -24 z" class="glow" fill="#E39B26" stroke="#2A3B55" stroke-width="2"/><path d="M92 68 l6 8 l6 -8" fill="#C9A04A"/></g></svg>`,
+      click(el) {
+        replay(el, 'swing'); SFX.chime();
+        const pal = ['#C8371F', '#138F8F', '#E39B26', '#1D4FA6', '#B0367A', '#FFC233'];
+        el.querySelectorAll('.glow').forEach((g) => g.setAttribute('fill', pick(pal)));
+        say(el, pick(['Гранд-базар: близько 4000 крамниць. І жодного реле без корпусу!', 'Торгуємось: реле за 2 сіміти? 🥯', 'Ліхтарі мозаїчні, а дроти — в корпусі.']));
+      } },
+    tea: { cls: 'tg', hint: 'налий чаю', svg: `
+      <svg viewBox="0 0 120 100"><ellipse cx="60" cy="93" rx="34" ry="6" fill="#FFFFFF" stroke="#2A3B55" stroke-width="2.5"/>
+      <clipPath id="tgClip"><path d="M42 20 h36 q-8 20 -2 36 q4 12 -7 34 h-18 q-11 -22 -7 -34 q6 -16 -2 -36 z"/></clipPath>
+      <g clip-path="url(#tgClip)"><rect x="30" y="20" width="60" height="72" fill="#F3F6FA"/><rect class="liquid" x="30" y="24" width="60" height="68" fill="#C8371F" opacity=".85"/><rect class="sugar" x="55" y="30" width="9" height="9" fill="#FFFFFF" stroke="#2A3B55" stroke-width="1"/></g>
+      <path d="M42 20 h36 q-8 20 -2 36 q4 12 -7 34 h-18 q-11 -22 -7 -34 q6 -16 -2 -36 z" fill="none" stroke="#2A3B55" stroke-width="2.5"/>
+      <path d="M42 20 h36" stroke="#C9A04A" stroke-width="4"/></svg>`,
+      click(el) { el.classList.toggle('full'); if (el.classList.contains('full')) { SFX.pour(); say(el, 'Afiyet olsun! <small>«смачного» турецькою. Çay — чай</small>'); } else { SFX.pop(); say(el, 'Випили! Ще склянку? ☕'); } } },
+  };
+  Object.entries(LAND).forEach(([id, d]) => {
+    const head = document.querySelector('#' + id + ' .stop-head');
+    if (!head) return;
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'land ' + d.cls;
+    b.setAttribute('aria-label', d.hint);
+    b.innerHTML = d.svg + '<span class="hint">' + d.hint + '</span>';
+    b.addEventListener('click', () => d.click(b));
+    head.appendChild(b);
+  });
+
+  // ---------- тюльпани між розділами ----------
+  const TC = ['#C8371F', '#B0367A', '#E39B26', '#1D4FA6', '#C8371F', '#138F8F', '#B0367A'];
+  document.querySelectorAll('section.stop').forEach((sec) => {
+    const row = document.createElement('div');
+    row.className = 'tulips';
+    TC.forEach((c, i) => {
+      const t = document.createElement('button');
+      t.type = 'button'; t.className = 'tulip'; t.setAttribute('aria-label', 'Тюльпан');
+      t.innerHTML = `<svg viewBox="0 0 34 60"><path d="M17 58 V26" stroke="#2E8B57" stroke-width="2.5"/><path d="M17 46 q-11 -2 -12 -12 q9 2 12 10" fill="#2E8B57"/>
+        <g class="head-t"><path d="M7 14 q0 14 10 14 q10 0 10 -14 l-5 5 l-5 -9 l-5 9 z" fill="${c}" stroke="#2A3B55" stroke-width="1.5" stroke-linejoin="round"/></g></svg>`;
+      t.addEventListener('click', () => {
+        t.classList.toggle('bloom'); SFX.pop();
+        burst(t, ['🌷', '✿', '❀'], 8);
+        if (Math.random() < .3) say(t, 'Lale — тюльпан. До Європи тюльпани потрапили саме з Османської імперії.');
+      });
+      row.appendChild(t);
+    });
+    sec.parentNode.insertBefore(row, sec);
+  });
+
+  // ---------- герой: чайки, пором, блискавка ----------
+  const city = document.querySelector('.city');
+  city.querySelectorAll('.gull').forEach((g) => g.addEventListener('click', () => {
+    replay(g, 'flyoff'); SFX.squawk();
+    say(g, pick(['Кря! Ой, я ж чайка. Віддай сіміт! 🥯', 'Я пролітаю над Босфором без дроту. Як магнітне поле в реле!', 'Тутешні чайки крадуть сіміти. Тримай міцніше!']));
+  }));
+  const ferry = city.querySelector('.ferry');
+  if (ferry) {
+    ferry.insertAdjacentHTML('afterbegin', '<circle class="smoke" cx="54" cy="258" r="7" fill="#DCE6F7"/>');
+    ferry.addEventListener('click', () => { replay(ferry, 'honk'); SFX.horn(); say(ferry, 'Ту-туу! Пором RELAY відправляється о 09:00.'); });
+  }
+  const bolt = city.querySelector('.bolt-blink');
+  if (bolt) bolt.addEventListener('click', () => { replay(city, 'zap'); SFX.zap(); say(bolt, '⚡ Ба-бах! Ось чому 220 В — лише для дорослого електрика.'); });
+
+  // ---------- кіт-провідник ----------
+  const cat = document.createElement('button');
+  cat.type = 'button'; cat.className = 'cat'; cat.setAttribute('aria-label', 'Кіт Сіміт: клацни, щоб почути пораду');
+  cat.innerHTML = `<svg viewBox="0 0 100 80">
+    <path class="tail" d="M20 62 q-16 -6 -12 -26 q2 -8 8 -6" fill="none" stroke="#D9822B" stroke-width="7" stroke-linecap="round"/>
+    <ellipse cx="44" cy="62" rx="26" ry="15" fill="#E89A3C" stroke="#2A3B55" stroke-width="2.5"/>
+    <path d="M34 52 q4 6 0 14 M44 50 q4 7 0 16 M54 52 q4 6 0 14" stroke="#C06A1E" stroke-width="2.5" fill="none"/>
+    <path d="M42 18 l4 -14 l10 11 M70 15 l8 -12 l3 15" fill="#E89A3C" stroke="#2A3B55" stroke-width="2.5" stroke-linejoin="round"/>
+    <circle cx="62" cy="34" r="20" fill="#E89A3C" stroke="#2A3B55" stroke-width="2.5"/>
+    <g class="eyes"><ellipse cx="55" cy="32" rx="3" ry="4" fill="#12203A"/><ellipse cx="69" cy="32" rx="3" ry="4" fill="#12203A"/></g>
+    <path d="M60 39 l2 2 l2 -2 z" fill="#C8371F"/><path d="M62 41 q-3 4 -6 2 M62 41 q3 4 6 2" stroke="#2A3B55" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <path d="M44 38 l-10 -2 M44 42 l-10 2 M80 38 l10 -2 M80 42 l10 2" stroke="#2A3B55" stroke-width="1.3"/>
+    <circle cx="62" cy="57" r="5" fill="#1D4FA6" stroke="#2A3B55" stroke-width="1.5"/><circle cx="62" cy="57" r="2" fill="#FFFFFF"/>
+    <ellipse cx="34" cy="76" rx="6" ry="3.5" fill="#E89A3C" stroke="#2A3B55" stroke-width="2"/><ellipse cx="58" cy="76" rx="6" ry="3.5" fill="#E89A3C" stroke="#2A3B55" stroke-width="2"/>
+  </svg>`;
+  const CAT = [
+    'Мяу! Я Сіміт, місцевий вуличний кіт. Kedi — це «кіт» турецькою.',
+    'Котячий закон Ома: мокра лапа — менший опір. Сухі руки! 💧',
+    'Реле клацає — я здригаюсь. Тому воно клацає лише за хвилину до події.',
+    'COM, NO, NC… NO — «розімкнений, поки реле спить». Як я вдень. 😴',
+    'У моєму місті тисячі вуличних котів, і місцеві їх годують. Ну, ти зрозумів натяк.',
+    'Котушка тягне язичок, як я тягну рибку зі столу.',
+    'Після RESET реле вимкнене. Безпечний стан — мій улюблений стан.',
+    'Мур-р. Між мовчанням і гімном реле не клацає. Я перевіряв.',
+  ];
+  let catClicks = 0, catIdx = 0;
+  cat.addEventListener('click', () => {
+    catClicks++;
+    if (catClicks % 5 === 0) { replay(cat, 'spin'); SFX.meow(); setTimeout(SFX.meow, 300); say(cat, 'Мур-р-р! 🌀 Ти знайшов котячий секрет. Тепер ти почесний житель міста на двох берегах. Вгадав, якого?'); return; }
+    replay(cat, 'jump'); SFX.meow();
+    say(cat, CAT[catIdx++ % CAT.length], 3600);
+  });
+  document.body.appendChild(cat);
+
+  // ---------- намальована схема: вмикач і «розмовні» дроти ----------
+  const wiring = document.getElementById('wiring');
+  const wireBtn = document.getElementById('wireBtn');
+  if (wiring && wireBtn) {
+    wireBtn.addEventListener('click', () => {
+      const on = !wiring.classList.contains('on');
+      wiring.classList.toggle('on', on);
+      wireBtn.setAttribute('aria-pressed', on);
+      wireBtn.textContent = on ? '💤 D4 = LOW' : '⚡ D4 = HIGH';
+      on ? SFX.tick() : SFX.pop();
+      say(wireBtn, on ? 'Клац! COM–NO замкнулись, «підсилювач» світиться.' : 'Реле відпустило. COM–NO розімкнені.');
+    });
+    wiring.querySelectorAll('.w').forEach((w) => w.addEventListener('click', (e) => {
+      replay(w, 'flash'); SFX.tick();
+      say(w, w.dataset.say, 3600);
+    }));
+  }
+
+  // ---------- DoD: усе відмічено — дощ із сімітів і тюльпанів ----------
+  const boxes = [...document.querySelectorAll('#dod input')];
+  function rain() {
+    for (let i = 0; i < 40; i++) {
+      const c = document.createElement('span');
+      c.className = 'confetti'; c.textContent = pick(['🥯', '🌷', '🧿', '⚡', '☕']);
+      c.style.left = Math.random() * 100 + 'vw';
+      c.style.animationDuration = (2.2 + Math.random() * 2) + 's';
+      c.style.animationDelay = (Math.random() * .8) + 's';
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 5200);
+    }
+    SFX.chime();
+  }
+  boxes.forEach((b) => b.addEventListener('change', () => {
+    if (b.checked) SFX.tick();
+    if (boxes.every((x) => x.checked)) { rain(); say(document.querySelector('#tea h2'), 'Teşekkürler! <small>«дякую» турецькою. Урок 4 пройдено ⚡</small>', 4000); }
+  }));
+})();
+</script>

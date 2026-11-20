@@ -1,0 +1,39 @@
+name: Lesson 4 relay
+version: 1
+author: STEM-93
+# Реле вмикається за хвилину до події, тримає підсилювач між мовчанням і гімном,
+# вимикається через 15 с тиші. Ручний PLAY чекає прогріву 3 с.
+steps:
+  - wait-serial: 'Кнопки: A+B'
+  - expect-pin: { part-id: uno, pin: '4', value: 0 }   # після старту реле вимкнене
+  - write-serial: "CLOCK OFF\n"
+  - delay: 100ms
+  - write-serial: "SET 2026-10-16 08:59:50\n"
+  # До хвилини мовчання 10 с (< 60 с) — реле вмикається заздалегідь
+  - wait-serial: 'Реле: УВІМК (авто)'
+  - delay: 50ms
+  - expect-pin: { part-id: uno, pin: '4', value: 1 }
+  - wait-serial: 'НАСТАВ ЧАС ПОДІЇ 1) 09:00'
+  - wait-serial: 'ГРАЄ: відтворення підтверджено'
+  - wait-serial: 'ГОТОВО: трек більше не грає'
+  # Гімн через хвилину — реле між подіями не вимикається
+  - wait-serial: 'НАСТАВ ЧАС ПОДІЇ 2) 09:01'
+  - expect-pin: { part-id: uno, pin: '4', value: 1 }
+  - wait-serial: 'ГРАЄ: відтворення підтверджено'
+  - wait-serial: 'ГОТОВО: трек більше не грає'
+  # 15 с тиші — вимикаємо
+  - wait-serial: 'Реле: ВИМК (авто)'
+  - delay: 50ms
+  - expect-pin: { part-id: uno, pin: '4', value: 0 }
+  # Ручний запуск: спершу реле, 3 с прогріву, потім трек
+  - write-serial: "PLAY 7\n"
+  - wait-serial: 'Прогріваємо підсилювач'
+  - wait-serial: 'Команда: відтворити трек 7'
+  - wait-serial: 'ГРАЄ: відтворення підтверджено'
+  # AMP OFF вручну — реле вимикається, AMP AUTO — повертається
+  - write-serial: "AMP OFF\n"
+  - wait-serial: 'Реле: ВИМК (вручну'
+  - delay: 50ms
+  - expect-pin: { part-id: uno, pin: '4', value: 0 }
+  - write-serial: "AMP AUTO\n"
+  - wait-serial: 'Реле: УВІМК (авто)'
